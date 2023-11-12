@@ -1,7 +1,7 @@
 import sys
-sys.path.append('emavfi')
-from utils import InputPadder
-from Trainer import Model
+# sys.path.append('emavfi')
+from emavfi.utils import InputPadder
+from emavfi.Trainer import Model
 import emavfi.config as cfg
 import cv2
 import os
@@ -57,13 +57,16 @@ def run_interpolation(args):
     imgs = []
     for i in range(len(img_list)-1):
         if args.verbose:
-            print(f"Running interpolation on {img_path_list[i]} and {img_path_list[i+1]}")
+            print(
+                f"Running interpolation on {img_path_list[i]} and {img_path_list[i+1]}")
         if i == 0:
-            imgs.extend(run_interpolation_pair(args, model, img_list[i], img_list[i+1]))
+            imgs.extend(run_interpolation_pair(
+                args, model, img_list[i], img_list[i+1]))
         # if i == len(img_list)-2:
         #     imgs.extend(run_interpolation_pair(args, model, img_list[i], img_list[i+1])[1:])
         else:
-            imgs.extend(run_interpolation_pair(args, model, img_list[i], img_list[i+1])[1:])
+            imgs.extend(run_interpolation_pair(
+                args, model, img_list[i], img_list[i+1])[1:])
 
     os.makedirs('interpolations', exist_ok=True)
     for i, im in enumerate(imgs):
