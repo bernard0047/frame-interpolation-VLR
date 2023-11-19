@@ -1,8 +1,8 @@
 from functools import partial
 import torch.nn as nn
 
-from emavfi.model import feature_extractor
-from emavfi.model import flow_estimation
+from model import feature_extractor
+from model import flow_estimation
 
 '''==========Model config=========='''
 
