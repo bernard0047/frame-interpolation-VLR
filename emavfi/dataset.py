@@ -57,13 +57,16 @@ class CO3dDataset(Dataset):
 
         return triplets
 
-    def aug(self, img0, gt, img1, h, w):
-        ih, iw, _ = img0.shape
-        x = np.random.randint(0, ih - h + 1)
-        y = np.random.randint(0, iw - w + 1)
-        img0 = img0[x:x+h, y:y+w, :]
-        img1 = img1[x:x+h, y:y+w, :]
-        gt = gt[x:x+h, y:y+w, :]
+    def aug(self, img0, gt, img1, h, w, train=True):
+        img0 = cv2.resize(img0, (w, h))
+        gt = cv2.resize(gt, (w, h))
+        img1 = cv2.resize(img1, (w, h))
+        # ih, iw, _ = img0.shape
+        # x = np.random.randint(0, ih - h + 1)
+        # y = np.random.randint(0, iw - w + 1)
+        # img0 = img0[x:x+h, y:y+w, :]
+        # img1 = img1[x:x+h, y:y+w, :]
+        # gt = gt[x:x+h, y:y+w, :]
         return img0, gt, img1
 
     def __len__(self):
