@@ -16,7 +16,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class CO3dDataset(Dataset):
-    def __init__(self, root, tg_frames=45, train=True):
+    def __init__(self, root, tg_frames=45, train=False):
         self.train = train
         self.root = root
         self.objects = glob(self.root+'/*/*')
@@ -40,7 +40,7 @@ class CO3dDataset(Dataset):
         for i in range(0, len(total_imgs)-jump):
             triplets.append(
                 [total_imgs[i], total_imgs[i+jump//2], total_imgs[i+jump]])
-        return total_imgs
+        return triplets
 
     def get_triplets(self, objects, frames):
         triplets = []
@@ -71,9 +71,9 @@ class CO3dDataset(Dataset):
 
     def __getitem__(self, index):
         img0, gt, img1 = self.triplets[index]
+        img0, gt, img1 = self.aug(img0, gt, img1, 256, 256)
 
         if self.train:
-            img0, gt, img1 = self.aug(img0, gt, img1, 256, 256)
             if random.uniform(0, 1) < 0.5:
                 img0 = img0[:, :, ::-1]
                 img1 = img1[:, :, ::-1]
@@ -110,10 +110,13 @@ class CO3dDataset(Dataset):
 
 
 dataset = CO3dDataset('../dataset')
+print(dataset.__getitem__(0).shape)
 # sampler = DistributedSampler(dataset)
-# train_data = DataLoader(dataset, batch_size=32, num_workers=8, pin_memory=True, drop_last=True)
+# train_data = DataLoader(dataset, batch_size=2,
+#                         num_workers=1, pin_memory=True, drop_last=True)
 # for i, sample in enumerate(train_data):
-#     pass
+#     print(sample.shape)
+#     break
 
 
 # class VimeoDataset(Dataset):
