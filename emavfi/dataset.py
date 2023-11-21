@@ -38,12 +38,9 @@ class CO3dDataset(Dataset):
         triplets = []
         jump = len(total_imgs)//frames
         for i in range(0, len(total_imgs)-jump):
-            im1, gt, im2 = total_imgs[i], total_imgs[i +
-                                                     jump//2], total_imgs[i+jump]
-            im1, gt, im2 = self.aug(im1, gt, im2, 256, 256)
             triplets.append(
-                [im1, gt, im2])
-        return triplets
+                [total_imgs[i], total_imgs[i+jump//2], total_imgs[i+jump]])
+        return total_imgs
 
     def get_triplets(self, objects, frames):
         triplets = []
@@ -112,16 +109,12 @@ class CO3dDataset(Dataset):
         return torch.cat((img0, img1, gt), 0)
 
 
-# dataset = CO3dDataset('../dataset')
-# print(dataset.__len__())
-# print(dataset.__getitem__(0).shape)
+dataset = CO3dDataset('../dataset')
 # sampler = DistributedSampler(dataset)
-# train_data = DataLoader(dataset, batch_size=2,
-#                         num_workers=1, pin_memory=True, drop_last=True)
-
+# train_data = DataLoader(dataset, batch_size=32, num_workers=8, pin_memory=True, drop_last=True)
 # for i, sample in enumerate(train_data):
-#     print(sample.shape)
-#     exit()
+#     pass
+
 
 # class VimeoDataset(Dataset):
 #     def __init__(self, dataset_name, path, batch_size=32, model="RIFE"):
