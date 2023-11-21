@@ -7,6 +7,7 @@ import torch.distributed as dist
 import numpy as np
 import random
 import argparse
+import sys
 
 from Trainer import Model
 from dataset import CO3dDataset
@@ -41,7 +42,6 @@ def train(model, local_rank, batch_size, data_path):
     val_data = DataLoader(dataset_val, batch_size=batch_size, pin_memory=True, num_workers=8)
     # print('training...')
     # pdb.set_trace()
-    # breakpoint()
     time_stamp = time.time()
     for epoch in range(100):
         sampler.set_epoch(epoch)
@@ -64,11 +64,7 @@ def train(model, local_rank, batch_size, data_path):
         nr_eval += 1
         if nr_eval % 10 == 0:
             evaluate(model, val_data, nr_eval, local_rank)
-        # model.save_model(local_rank)
-        if epoch%1==0:
-            model.save_model(local_rank)
-                
-            
+            model.save_model(epoch,local_rank)
         dist.barrier()
 
 def evaluate(model, val_data, nr_eval, local_rank):

@@ -74,7 +74,7 @@ class CO3dDataset(Dataset):
 
     def __getitem__(self, index):
         img0, gt, img1 = self.triplets[index]
-        img0, gt, img1 = self.aug(img0, gt, img1, 256, 256)
+        img0, gt, img1 = self.aug(img0, gt, img1, 512, 512)
 
         if self.train:
             if random.uniform(0, 1) < 0.5:
@@ -112,8 +112,10 @@ class CO3dDataset(Dataset):
         return torch.cat((img0, img1, gt), 0)
 
 
-dataset = CO3dDataset('../dataset')
-print(dataset.__getitem__(0).shape)
+if __name__ == "__main__":
+    
+    dataset = CO3dDataset('../dataset')
+    print(dataset.__getitem__(0).shape)
 # sampler = DistributedSampler(dataset)
 # train_data = DataLoader(dataset, batch_size=2,
 #                         num_workers=1, pin_memory=True, drop_last=True)

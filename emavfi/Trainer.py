@@ -43,9 +43,9 @@ class Model:
                 name = self.name
             self.net.load_state_dict(convert(torch.load(f'infer_models/emavfi/{name}.pkl')))
     
-    def save_model(self, rank=0):
+    def save_model(self, epoch,rank=0):
         if rank == 0:
-            torch.save(self.net.state_dict(),f'ckpt/{self.name}.pkl')
+            torch.save(self.net.state_dict(),f'ckpt/{self.name}_512_epoch_{epoch}.pkl')
 
     @torch.no_grad()
     def hr_inference(self, img0, img1, TTA = False, down_scale = 1.0, timestep = 0.5, fast_TTA = False):

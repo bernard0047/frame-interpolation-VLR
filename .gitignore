@@ -5,3 +5,4 @@ __pycache__/
 *.pkl
 *.zip
 data/
+emavfi/log/*
