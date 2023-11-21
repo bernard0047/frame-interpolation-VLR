@@ -2,10 +2,10 @@ import torch
 import torch.nn.functional as F
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.optim import AdamW
-from emavfi.model.loss import *
-from emavfi.model.warplayer import warp
+from model.loss import *
+from model.warplayer import warp
 
-from emavfi.config import *
+from config import *
 
     
 class Model:

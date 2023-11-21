@@ -10,7 +10,7 @@ from glob import glob
 from natsort import natsorted
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
+from torchvision.utils import save_image
 cv2.setNumThreads(1)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

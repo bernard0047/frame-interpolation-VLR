@@ -9,11 +9,12 @@ import random
 import argparse
 
 from Trainer import Model
-from dataset import VimeoDataset
+from dataset import CO3dDataset
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data.distributed import DistributedSampler
 from config import *
+import pdb
 
 device = torch.device("cuda")
 exp = os.path.abspath('.').split('/')[-1]
@@ -32,20 +33,23 @@ def train(model, local_rank, batch_size, data_path):
     step = 0
     nr_eval = 0
     best = 0
-    dataset = VimeoDataset('train', data_path)
+    dataset = CO3dDataset(root = args.data_path,train= True)
     sampler = DistributedSampler(dataset)
     train_data = DataLoader(dataset, batch_size=batch_size, num_workers=8, pin_memory=True, drop_last=True, sampler=sampler)
     args.step_per_epoch = train_data.__len__()
-    dataset_val = VimeoDataset('test', data_path)
+    dataset_val = CO3dDataset(root = args.data_path,train= False)
     val_data = DataLoader(dataset_val, batch_size=batch_size, pin_memory=True, num_workers=8)
-    print('training...')
+    # print('training...')
+    # pdb.set_trace()
+    # breakpoint()
     time_stamp = time.time()
-    for epoch in range(300):
+    for epoch in range(100):
         sampler.set_epoch(epoch)
         for i, imgs in enumerate(train_data):
             data_time_interval = time.time() - time_stamp
             time_stamp = time.time()
             imgs = imgs.to(device, non_blocking=True) / 255.
+            
             imgs, gt = imgs[:, 0:6], imgs[:, 6:]
             learning_rate = get_learning_rate(step)
             _, loss = model.update(imgs, gt, learning_rate, training=True)
@@ -58,9 +62,12 @@ def train(model, local_rank, batch_size, data_path):
                 print('epoch:{} {}/{} time:{:.2f}+{:.2f} loss:{:.4e}'.format(epoch, i, args.step_per_epoch, data_time_interval, train_time_interval, loss))
             step += 1
         nr_eval += 1
-        if nr_eval % 3 == 0:
+        if nr_eval % 10 == 0:
             evaluate(model, val_data, nr_eval, local_rank)
-        model.save_model(local_rank)    
+        # model.save_model(local_rank)
+        if epoch%1==0:
+            model.save_model(local_rank)
+                
             
         dist.barrier()
 
@@ -83,11 +90,12 @@ def evaluate(model, val_data, nr_eval, local_rank):
         writer_val.add_scalar('psnr', psnr, nr_eval)
         
 if __name__ == "__main__":    
+    # torchrun train.py
     parser = argparse.ArgumentParser()
     parser.add_argument('--local_rank', default=0, type=int, help='local rank')
-    parser.add_argument('--world_size', default=4, type=int, help='world size')
-    parser.add_argument('--batch_size', default=8, type=int, help='batch size')
-    parser.add_argument('--data_path', type=str, help='data path of vimeo90k')
+    parser.add_argument('--world_size', default=1, type=int, help='world size')
+    parser.add_argument('--batch_size', default=10, type=int, help='batch size')
+    parser.add_argument('--data_path', default= '/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/data/dataset', type=str, help='data path of co3d')
     args = parser.parse_args()
     torch.distributed.init_process_group(backend="nccl", world_size=args.world_size)
     torch.cuda.set_device(args.local_rank)
