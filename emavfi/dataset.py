@@ -16,46 +16,59 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class CO3dDataset(Dataset):
-    def __init__(self, root, tg_frames=45, train=False):
-        self.train = train
+    def __init__(self, root, tg_frames, in_size, multi, train):
+        self.train = 'train' if train else 'test'
         self.root = root
-        self.objects = glob(self.root+'/*/*')
-        self.objects = self.objects[:75] if train else self.objects[75:]
-        self.triplets = self.get_triplets(self.objects, tg_frames)
+        self.in_size = in_size
+        self.tg_frames = tg_frames
+        self.multi = multi
+        self.objects = glob(self.root+f'/{self.train}/*')
+        self.packs = self.get_packs(self.objects)
+        if train:
+            random.shuffle(self.packs)
+        # self.triplets = self.get_triplets(self.objects, tg_frames)
         self.h = 256  # ?????????????????
         self.w = 448
 
-    def is_black(self, frame):
-        return frame.mean() < 20
+    def get_packs(self, objects):
+        packs = []
+        for obj in objects:
+            ims = natsorted(glob(obj+'/images/*'))
+            pack_size = len(ims)//self.tg_frames
+            for i in range(0, len(ims)-pack_size):
+                packs.append(ims[i:i+pack_size])
+        return packs
 
-    def extract_triplets_from_object(self, total_frames, frames):
-        total_imgs = []
-        for path in total_frames:
-            img = cv2.imread(path)
-            if not self.is_black(img):
-                total_imgs.append(img)
+    # def is_black(self, frame):
+    #     return frame.mean() < 20
 
-        triplets = []
-        jump = len(total_imgs)//frames
-        for i in range(0, len(total_imgs)-jump):
-            triplets.append(
-                [total_imgs[i], total_imgs[i+jump//2], total_imgs[i+jump]])
-        return triplets
+    # def extract_triplets_from_object(self, total_frames, frames):
+    #     total_imgs = []
+    #     # for path in total_frames:
+    #     #     img = cv2.imread(path)
+    #     #     if not self.is_black(img):
+    #     #         total_imgs.append(img)
 
-    def get_triplets(self, objects, frames):
-        triplets = []
-        ttype = 'Train' if self.train else 'Test'
+    #     triplets = []
+    #     jump = len(total_imgs)//frames
+    #     for i in range(0, len(total_imgs)-jump):
+    #         triplets.append(
+    #             [total_imgs[i], total_imgs[i+jump//2], total_imgs[i+jump]])
+    #     return triplets
 
-        futures = []
-        with ThreadPoolExecutor() as exe:
-            for obj in objects:
-                total_frames = natsorted(glob(osp.join(obj, 'images/*')))
-                futures.append(exe.submit(self.extract_triplets_from_object,
-                                          total_frames, frames))
-            for fut in tqdm(as_completed(futures), desc=f'Loading {ttype} Data Objects', total=len(objects)):
-                triplets.extend(fut.result())
+    # def get_triplets(self, objects, frames):
+    #     triplets = []
 
-        return triplets
+    #     futures = []
+    #     with ThreadPoolExecutor() as exe:
+    #         for obj in objects:
+    #             total_frames = natsorted(glob(osp.join(obj, 'images/*')))
+    #             futures.append(exe.submit(self.extract_triplets_from_object,
+    #                                       total_frames, frames))
+    #         for fut in tqdm(as_completed(futures), desc=f'Loading {self.train} Data Objects', total=len(objects)):
+    #             triplets.extend(fut.result())
+
+    #     return triplets
 
     def aug(self, img0, gt, img1, h, w, train=True):
         img0 = cv2.resize(img0, (w, h))
@@ -70,11 +83,29 @@ class CO3dDataset(Dataset):
         return img0, gt, img1
 
     def __len__(self):
-        return len(self.triplets)
+        return len(self.packs)
 
     def __getitem__(self, index):
-        img0, gt, img1 = self.triplets[index]
-        img0, gt, img1 = self.aug(img0, gt, img1, 512, 512)
+        # img0, gt, img1 = self.triplets[index]
+        pack = self.packs[index]
+        ind = np.arange(len(pack))
+        if self.multi:
+            random.shuffle(ind)
+            ind = ind[:3]
+            ind.sort()
+            # print(ind)
+            timestep = (ind[1] - ind[0]) * 1.0 / (ind[2] - ind[0] + 1e-6)
+
+        else:
+            ind = [0, len(ind)//2, len(ind)-1]
+            # print(ind)
+            timestep = 0.5
+
+        img0 = cv2.imread(pack[ind[0]])
+        gt = cv2.imread(pack[ind[1]])
+        img1 = cv2.imread(pack[ind[2]])
+
+        img0, gt, img1 = self.aug(img0, gt, img1, self.in_size, self.in_size)
 
         if self.train:
             if random.uniform(0, 1) < 0.5:
@@ -83,6 +114,8 @@ class CO3dDataset(Dataset):
                 gt = gt[:, :, ::-1]
             if random.uniform(0, 1) < 0.5:
                 img1, img0 = img0, img1
+                timestep = 1 - timestep
+
             if random.uniform(0, 1) < 0.5:
                 img0 = img0[::-1]
                 img1 = img1[::-1]
@@ -109,13 +142,16 @@ class CO3dDataset(Dataset):
         img0 = torch.from_numpy(img0.copy()).permute(2, 0, 1)
         img1 = torch.from_numpy(img1.copy()).permute(2, 0, 1)
         gt = torch.from_numpy(gt.copy()).permute(2, 0, 1)
-        return torch.cat((img0, img1, gt), 0)
+        return torch.cat((img0, img1, gt), 0), timestep
 
 
 if __name__ == "__main__":
-    
-    dataset = CO3dDataset('../dataset')
-    print(dataset.__getitem__(0).shape)
+
+    dataset = CO3dDataset('../dataset', 18, 256, multi=True, train=False)
+    print(dataset.__len__())
+    for i in range(5):
+        item = dataset.__getitem__(i)
+        print(item[0].shape, item[1])
 # sampler = DistributedSampler(dataset)
 # train_data = DataLoader(dataset, batch_size=2,
 #                         num_workers=1, pin_memory=True, drop_last=True)

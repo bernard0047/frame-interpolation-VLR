@@ -20,13 +20,16 @@ import pdb
 device = torch.device("cuda")
 exp = os.path.abspath('.').split('/')[-1]
 
+
 def get_learning_rate(step):
     if step < 2000:
         mul = step / 2000
         return 2e-4 * mul
     else:
-        mul = np.cos((step - 2000) / (300 * args.step_per_epoch - 2000) * math.pi) * 0.5 + 0.5
+        mul = np.cos((step - 2000) /
+                     (300 * args.step_per_epoch - 2000) * math.pi) * 0.5 + 0.5
         return (2e-4 - 2e-5) * mul + 2e-5
+
 
 def train(model, local_rank, batch_size, data_path):
     if local_rank == 0:
@@ -34,12 +37,16 @@ def train(model, local_rank, batch_size, data_path):
     step = 0
     nr_eval = 0
     best = 0
-    dataset = CO3dDataset(root = args.data_path,train= True)
+    dataset = CO3dDataset(root=args.data_path, tg_frames=args.tg_frames,
+                          in_size=args.train_im_size, multi=args.multi_interpolate, train=True)
     sampler = DistributedSampler(dataset)
-    train_data = DataLoader(dataset, batch_size=batch_size, num_workers=8, pin_memory=True, drop_last=True, sampler=sampler)
+    train_data = DataLoader(dataset, batch_size=batch_size, num_workers=8,
+                            pin_memory=True, drop_last=True, sampler=sampler)
     args.step_per_epoch = train_data.__len__()
-    dataset_val = CO3dDataset(root = args.data_path,train= False)
-    val_data = DataLoader(dataset_val, batch_size=batch_size, pin_memory=True, num_workers=8)
+    dataset_val = CO3dDataset(root=args.data_path, tg_frames=args.tg_frames,
+                              in_size=args.train_im_size, multi=args.multi_interpolate, train=False)
+    val_data = DataLoader(dataset_val, batch_size=batch_size,
+                          pin_memory=True, num_workers=8)
     # print('training...')
     # pdb.set_trace()
     time_stamp = time.time()
@@ -49,7 +56,7 @@ def train(model, local_rank, batch_size, data_path):
             data_time_interval = time.time() - time_stamp
             time_stamp = time.time()
             imgs = imgs.to(device, non_blocking=True) / 255.
-            
+
             imgs, gt = imgs[:, 0:6], imgs[:, 6:]
             learning_rate = get_learning_rate(step)
             _, loss = model.update(imgs, gt, learning_rate, training=True)
@@ -59,13 +66,15 @@ def train(model, local_rank, batch_size, data_path):
                 writer.add_scalar('learning_rate', learning_rate, step)
                 writer.add_scalar('loss', loss, step)
             if local_rank == 0:
-                print('epoch:{} {}/{} time:{:.2f}+{:.2f} loss:{:.4e}'.format(epoch, i, args.step_per_epoch, data_time_interval, train_time_interval, loss))
+                print('epoch:{} {}/{} time:{:.2f}+{:.2f} loss:{:.4e}'.format(epoch, i,
+                      args.step_per_epoch, data_time_interval, train_time_interval, loss))
             step += 1
         nr_eval += 1
         if nr_eval % 10 == 0:
             evaluate(model, val_data, nr_eval, local_rank)
-            model.save_model(epoch,local_rank)
+            model.save_model(epoch, local_rank)
         dist.barrier()
+
 
 def evaluate(model, val_data, nr_eval, local_rank):
     if local_rank == 0:
@@ -78,22 +87,35 @@ def evaluate(model, val_data, nr_eval, local_rank):
         with torch.no_grad():
             pred, _ = model.update(imgs, gt, training=False)
         for j in range(gt.shape[0]):
-            psnr.append(-10 * math.log10(((gt[j] - pred[j]) * (gt[j] - pred[j])).mean().cpu().item()))
-   
+            psnr.append(-10 * math.log10(((gt[j] - pred[j])
+                        * (gt[j] - pred[j])).mean().cpu().item()))
+
     psnr = np.array(psnr).mean()
     if local_rank == 0:
         print(str(nr_eval), psnr)
         writer_val.add_scalar('psnr', psnr, nr_eval)
-        
-if __name__ == "__main__":    
+
+
+if __name__ == "__main__":
     # torchrun train.py
     parser = argparse.ArgumentParser()
     parser.add_argument('--local_rank', default=0, type=int, help='local rank')
     parser.add_argument('--world_size', default=1, type=int, help='world size')
-    parser.add_argument('--batch_size', default=10, type=int, help='batch size')
-    parser.add_argument('--data_path', default= '/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/data/dataset', type=str, help='data path of co3d')
+
+    parser.add_argument('--multi_interpolate', default=True, type=bool,
+                        help='True if multi interpolation dataloder else single')
+    parser.add_argument('--batch_size', default=10,
+                        type=int, help='batch size')
+    parser.add_argument('--data_path', default='/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/data/dataset',
+                        type=str, help='data path of co3d')
+    parser.add_argument('--tg_frames', default=18, type=int,
+                        help='number of frames to generate 3D from')
+    parser.add_argument('--train_im_size', default=256,
+                        type=int, help='training resolution')
+
     args = parser.parse_args()
-    torch.distributed.init_process_group(backend="nccl", world_size=args.world_size)
+    torch.distributed.init_process_group(
+        backend="nccl", world_size=args.world_size)
     torch.cuda.set_device(args.local_rank)
     if args.local_rank == 0 and not os.path.exists('log'):
         os.mkdir('log')
@@ -105,4 +127,3 @@ if __name__ == "__main__":
     torch.backends.cudnn.benchmark = True
     model = Model(args.local_rank)
     train(model, args.local_rank, args.batch_size, args.data_path)
-        
