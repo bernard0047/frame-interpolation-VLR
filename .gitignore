@@ -6,3 +6,5 @@ __pycache__/
 *.zip
 data/
 emavfi/log/*
+emavfi/compare/*
+emavfi/interpolations/*

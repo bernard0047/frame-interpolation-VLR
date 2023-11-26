@@ -28,7 +28,7 @@ class CO3dDataset(Dataset):
             random.shuffle(self.packs)
         # self.triplets = self.get_triplets(self.objects, tg_frames)
         self.h = 256  # ?????????????????
-        self.w = 448
+        self.w = 448    
 
     def get_packs(self, objects):
         packs = []

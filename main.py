@@ -1,5 +1,5 @@
 import sys
-# sys.path.append('emavfi')
+sys.path.append('emavfi')
 from emavfi.utils import InputPadder
 from emavfi.Trainer import Model
 import emavfi.config as cfg
@@ -11,12 +11,12 @@ import argparse
 from glob import glob
 from natsort import natsorted
 
-
+#https://drive.google.com/file/d/1xam35ckjkepfIK0o8BwqX5-NgwPoR-Dx/view?usp=drive_link
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--n', default=3, type=int)
-    parser.add_argument('--input_dir', default='input', type=str)
-    parser.add_argument('--output_dir', default='3d', type=str)
+    parser.add_argument('--n', default=12, type=int)
+    parser.add_argument('--input_dir', default='/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/data/dataset/apple/110_13051_23361_18', type=str)
+    parser.add_argument('--output_dir', default='/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/emavfi/interpolations/inter_multi_large_110_13051_23361_36', type=str)
     parser.add_argument('--verbose', default=True, type=bool)
     args = parser.parse_args()
     return args
@@ -68,10 +68,10 @@ def run_interpolation(args):
             imgs.extend(run_interpolation_pair(
                 args, model, img_list[i], img_list[i+1])[1:])
 
-    os.makedirs('interpolations', exist_ok=True)
+    os.makedirs(args.output_dir, exist_ok=True)
     for i, im in enumerate(imgs):
         im = cv2.cvtColor(im, cv2.COLOR_RGB2BGR)
-        cv2.imwrite(f"interpolations/{i}.png", im)
+        cv2.imwrite(f"{args.output_dir}/{i}.png", im)
 
 
 def run_3d(args):

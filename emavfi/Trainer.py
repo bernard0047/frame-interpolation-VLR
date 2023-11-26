@@ -41,8 +41,13 @@ class Model:
         if rank <= 0 :
             if name is None:
                 name = self.name
-            self.net.load_state_dict(convert(torch.load(f'infer_models/emavfi/{name}.pkl')))
-    
+            # self.net.load_state_dict(convert(torch.load(f'infer_models/emavfi/{name}.pkl')))
+            # self.net.load_state_dict(convert(torch.load('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/baseline_ckpt/ours_small.pkl')))
+            # self.net.load_state_dict(convert(torch.load('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/baseline_ckpt/ours_small_t.pkl')))
+            # self.net.load_state_dict(convert(torch.load('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/emavfi/ckpt/ours_small.pkl')))
+            self.net.load_state_dict(convert(torch.load('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/baseline_ckpt/ours_t.pkl')))
+            
+            
     def save_model(self, epoch,rank=0):
         if rank == 0:
             torch.save(self.net.state_dict(),f'ckpt/{self.name}_512_epoch_{epoch}.pkl')
