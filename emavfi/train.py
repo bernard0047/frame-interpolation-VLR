@@ -95,10 +95,10 @@ def evaluate(model, val_data, nr_eval, local_rank):
         with torch.no_grad():
             pred, _ = model.update(imgs, gt, training=False,timestep=timestep)
         for j in range(gt.shape[0]):
-            psnr.append(-10 * math.log10(((gt[j] - pred[j])*(gt[j] - pred[j])).mean().cpu().item()))
+            #  psnr.append(-10 * math.log10(max(1e-10, ((gt[j] - pred[j])**2).mean().cpu().item())))
             
             
-            # psnr.append(-10 * math.log10(max(1e-10, ((gt[j] - pred[j])**2).mean().cpu().item())))
+            psnr.append(-10 * math.log10(max(1e-10, ((gt[j] - pred[j])**2).mean().cpu().item())))
 
 
     psnr = np.array(psnr).mean()
