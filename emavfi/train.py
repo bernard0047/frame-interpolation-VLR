@@ -77,7 +77,7 @@ def train(model, local_rank, batch_size, data_path):
                       args.step_per_epoch, data_time_interval, train_time_interval, loss))
             step += 1
         nr_eval += 1
-        if nr_eval % 1 == 0:
+        if nr_eval % 10 == 0:
             evaluate(model, val_data, nr_eval, local_rank)
             model.save_model(epoch, local_rank)
         dist.barrier()
