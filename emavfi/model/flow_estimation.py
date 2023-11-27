@@ -64,7 +64,7 @@ class MultiScaleFlow(nn.Module):
             flow = F.interpolate(flow, scale_factor=0.5, mode="bilinear", align_corners=False, recompute_scale_factor=False) * 0.5
         return y0, y1
 
-    def calculate_flow(self, imgs, timestep, af=None, mf=None):
+    def calculate_flow(self, imgs, timestep, af=None, mf=None): # multi
         img0, img1 = imgs[:, :3], imgs[:, 3:6]
         B = img0.size(0)
         flow, mask = None, None
@@ -118,9 +118,11 @@ class MultiScaleFlow(nn.Module):
         # appearence_features & motion_features
         af, mf = self.feature_bone(img0, img1)
         for i in range(self.flow_num_stage):
-            t = torch.full(mf[-1-i][:B].shape, timestep, dtype=torch.float).cuda()
+            # t = torch.full(mf[-1-i][:B].shape, timestep, dtype=torch.float).cuda()
+            t=  [torch.full(mf[-1-i][:B].shape[1:], timestep[j],dtype = torch.float)[None] for j in range(len(timestep))]
+            t = torch.cat(t,0).cuda()
             if flow != None:
-                flow_d, mask_d = self.block[i]( torch.cat([t*mf[-1-i][:B], (1-timestep)*mf[-1-i][B:],af[-1-i][:B],af[-1-i][B:]],1), 
+                flow_d, mask_d = self.block[i]( torch.cat([t*mf[-1-i][:B], (1-t)*mf[-1-i][B:],af[-1-i][:B],af[-1-i][B:]],1), 
                                                 torch.cat((img0, img1, warped_img0, warped_img1, mask), 1), flow)
                 flow = flow + flow_d
                 mask = mask + mask_d

@@ -1,4 +1,4 @@
-from benchmark.utils.padder import InputPadder
+from utils import InputPadder
 from Trainer import Model
 import config as cfg
 import cv2
@@ -42,8 +42,8 @@ model.device()
 
 print(f'=========================Start Generating=========================')
 
-I0 = cv2.imread('example/img1.jpg')
-I2 = cv2.imread('example/img2.jpg')
+I0 = cv2.imread('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/data/dataset/apple/110_13051_23361_12/frame000001.jpg')
+I2 = cv2.imread('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/data/dataset/apple/110_13051_23361_12/frame000019.jpg') 
 
 I0_ = (torch.tensor(I0.transpose(2, 0, 1)).cuda() / 255.).unsqueeze(0)
 I2_ = (torch.tensor(I2.transpose(2, 0, 1)).cuda() / 255.).unsqueeze(0)
