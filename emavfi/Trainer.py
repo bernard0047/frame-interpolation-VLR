@@ -167,5 +167,5 @@ class Model:
             return pred, loss_l1
         else: 
             with torch.no_grad():
-                flow, mask, merged, pred = self.net(imgs)
+                flow, mask, merged, pred = self.net(imgs,timestep= timestep)
                 return pred, 0
