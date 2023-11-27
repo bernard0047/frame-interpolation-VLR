@@ -43,14 +43,14 @@ class Model:
                 name = self.name
             # self.net.load_state_dict(convert(torch.load(f'infer_models/emavfi/{name}.pkl')))
             # self.net.load_state_dict(convert(torch.load('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/baseline_ckpt/ours_small.pkl')))
-            # self.net.load_state_dict(convert(torch.load('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/baseline_ckpt/ours_small_t.pkl')))
+            self.net.load_state_dict(convert(torch.load('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/baseline_ckpt/ours_small_t.pkl')))
             # self.net.load_state_dict(convert(torch.load('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/emavfi/ckpt/ours_small.pkl')))
-            self.net.load_state_dict(convert(torch.load('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/baseline_ckpt/ours_t.pkl')))
+            # self.net.load_state_dict(convert(torch.load('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/baseline_ckpt/ours_t.pkl')))
             
             
     def save_model(self, epoch,rank=0):
         if rank == 0:
-            torch.save(self.net.state_dict(),f'ckpt/{self.name}_512_epoch_{epoch}.pkl')
+            torch.save(self.net.state_dict(),f'ckpt/{self.name}_ours_small_t_epoch_{epoch}.pkl')
 
     @torch.no_grad()
     def hr_inference(self, img0, img1, TTA = False, down_scale = 1.0, timestep = 0.5, fast_TTA = False):
@@ -145,7 +145,7 @@ class Model:
             flip_pred = infer(imgs.flip(2).flip(3))
             return [(preds[i][0] + flip_pred[i][0].flip(1).flip(2))/2 for i in range(len(time_list))]
     
-    def update(self, imgs, gt, learning_rate=0, training=True):
+    def update(self, imgs, gt, learning_rate=0, training=True,timestep = 0.5):
         for param_group in self.optimG.param_groups:
             param_group['lr'] = learning_rate
         if training:
@@ -154,7 +154,8 @@ class Model:
             self.eval()
 
         if training:
-            flow, mask, merged, pred = self.net(imgs)
+            flow, mask, merged, pred = self.net(imgs,timestep= timestep)
+            
             loss_l1 = (self.lap(pred, gt)).mean()
 
             for merge in merged:

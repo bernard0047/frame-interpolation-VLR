@@ -16,9 +16,13 @@ from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data.distributed import DistributedSampler
 from config import *
 import pdb
+import datetime
 
 device = torch.device("cuda")
 exp = os.path.abspath('.').split('/')[-1]
+# os.environ['MASTER_ADDR'] = 'localhost'
+# os.environ['MASTER_PORT'] = '12345'
+
 
 
 def get_learning_rate(step):
@@ -47,19 +51,20 @@ def train(model, local_rank, batch_size, data_path):
                               in_size=args.train_im_size, multi=args.multi_interpolate, train=False)
     val_data = DataLoader(dataset_val, batch_size=batch_size,
                           pin_memory=True, num_workers=8)
-    # print('training...')
+    print('training...')
     # pdb.set_trace()
     time_stamp = time.time()
     for epoch in range(100):
         sampler.set_epoch(epoch)
-        for i, imgs in enumerate(train_data):
+        for i, cat_imgs in enumerate(train_data):
             data_time_interval = time.time() - time_stamp
             time_stamp = time.time()
+            imgs, timestep = cat_imgs 
             imgs = imgs.to(device, non_blocking=True) / 255.
-
+            timestep = timestep.to(device, non_blocking=True)
             imgs, gt = imgs[:, 0:6], imgs[:, 6:]
             learning_rate = get_learning_rate(step)
-            _, loss = model.update(imgs, gt, learning_rate, training=True)
+            _, loss = model.update(imgs, gt, learning_rate, training=True,timestep = timestep)
             train_time_interval = time.time() - time_stamp
             time_stamp = time.time()
             if step % 200 == 1 and local_rank == 0:
@@ -81,11 +86,12 @@ def evaluate(model, val_data, nr_eval, local_rank):
         writer_val = SummaryWriter('log/validate_EMAVFI')
 
     psnr = []
-    for _, imgs in enumerate(val_data):
+    for _, cat_imgs in enumerate(val_data):
+        imgs, timestep = cat_imgs 
         imgs = imgs.to(device, non_blocking=True) / 255.
         imgs, gt = imgs[:, 0:6], imgs[:, 6:]
         with torch.no_grad():
-            pred, _ = model.update(imgs, gt, training=False)
+            pred, _ = model.update(imgs, gt, training=False,timestep=timestep)
         for j in range(gt.shape[0]):
             psnr.append(-10 * math.log10(((gt[j] - pred[j])
                         * (gt[j] - pred[j])).mean().cpu().item()))
@@ -104,18 +110,26 @@ if __name__ == "__main__":
 
     parser.add_argument('--multi_interpolate', default=True, type=bool,
                         help='True if multi interpolation dataloder else single')
-    parser.add_argument('--batch_size', default=10,
+    parser.add_argument('--batch_size', default=24,
                         type=int, help='batch size')
-    parser.add_argument('--data_path', default='/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/data/dataset',
+    parser.add_argument('--data_path', default='/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/data/clean/dataset',
                         type=str, help='data path of co3d')
     parser.add_argument('--tg_frames', default=18, type=int,
                         help='number of frames to generate 3D from')
-    parser.add_argument('--train_im_size', default=256,
+    parser.add_argument('--train_im_size', default=384,
                         type=int, help='training resolution')
 
     args = parser.parse_args()
     torch.distributed.init_process_group(
         backend="nccl", world_size=args.world_size)
+    # torch.distributed.init_process_group(
+    #         backend='nccl',
+    #         init_method='env://',
+    #         timeout=datetime.timedelta(0, 1800),
+    #         world_size=args.world_size,
+    #         rank=0,
+    #         store=None,
+    #         group_name='')
     torch.cuda.set_device(args.local_rank)
     if args.local_rank == 0 and not os.path.exists('log'):
         os.mkdir('log')
@@ -125,5 +139,6 @@ if __name__ == "__main__":
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.benchmark = True
+    
     model = Model(args.local_rank)
     train(model, args.local_rank, args.batch_size, args.data_path)

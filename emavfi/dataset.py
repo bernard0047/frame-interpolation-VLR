@@ -147,7 +147,7 @@ class CO3dDataset(Dataset):
 
 if __name__ == "__main__":
 
-    dataset = CO3dDataset('../dataset', 18, 256, multi=True, train=False)
+    dataset = CO3dDataset('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/data/clean/dataset', 18, 256, multi=True, train=True)
     print(dataset.__len__())
     for i in range(5):
         item = dataset.__getitem__(i)
