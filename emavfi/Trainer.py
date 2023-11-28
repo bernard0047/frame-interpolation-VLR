@@ -9,16 +9,17 @@ from config import *
 
     
 class Model:
-    def __init__(self, local_rank):
+    def __init__(self, local_rank, use_perceptual_loss):
         backbonetype, multiscaletype = MODEL_CONFIG['MODEL_TYPE']
         backbonecfg, multiscalecfg = MODEL_CONFIG['MODEL_ARCH']
         self.net = multiscaletype(backbonetype(**backbonecfg), **multiscalecfg)
         self.name = MODEL_CONFIG['LOGNAME']
+        self.use_perceptual_loss = use_perceptual_loss
         self.device()
 
         # train
         self.optimG = AdamW(self.net.parameters(), lr=2e-4, weight_decay=1e-4)
-        self.lap = LapLoss()
+        self.lap = LapLoss(self.use_perceptual_loss)
         if local_rank != -1:
             self.net = DDP(self.net, device_ids=[local_rank], output_device=local_rank)
 
@@ -43,9 +44,11 @@ class Model:
                 name = self.name
             # self.net.load_state_dict(convert(torch.load(f'infer_models/emavfi/{name}.pkl')))
             # self.net.load_state_dict(convert(torch.load('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/baseline_ckpt/ours_small.pkl')))
-            self.net.load_state_dict(convert(torch.load('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/baseline_ckpt/ours_small_t.pkl')))
+            #self.net.load_state_dict(convert(torch.load('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/baseline_ckpt/ours_small_t.pkl')))
             # self.net.load_state_dict(convert(torch.load('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/emavfi/ckpt/ours_small.pkl')))
             # self.net.load_state_dict(convert(torch.load('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/baseline_ckpt/ours_t.pkl')))
+
+            self.net.load_state_dict(convert(torch.load(f'/home/ubuntu/frame-interpolation-VLR/emavfi/ckpt/ours_small_t.pkl')))
             
             
     def save_model(self, epoch,rank=0):
@@ -156,15 +159,22 @@ class Model:
         if training:
             flow, mask, merged, pred = self.net(imgs,timestep= timestep)
             
-            loss_l1 = (self.lap(pred, gt)).mean()
+            loss_l1, loss_perc, loss_total = self.lap(pred, gt)
+            loss_l1 = loss_l1.mean()
+            loss_perc - loss_perc.mean()
+            loss_total = loss_total.mean()
 
             for merge in merged:
-                loss_l1 += (self.lap(merge, gt)).mean() * 0.5
+                loss_l1_t, loss_perc_t, loss_total_t = self.lap(merge, gt)
+                loss_l1 += loss_l1_t.mean() * 0.5
+                loss_perc += loss_perc_t.mean() * 0.5
+                loss_total += loss_total_t.mean() * 0.5
+
 
             self.optimG.zero_grad()
-            loss_l1.backward()
+            loss_total.backward()
             self.optimG.step()
-            return pred, loss_l1
+            return pred, loss_l1, loss_perc, loss_total
         else: 
             with torch.no_grad():
                 flow, mask, merged, pred = self.net(imgs,timestep= timestep)

@@ -1,7 +1,10 @@
 import torch
 import torch.nn as nn
 import numpy as np 
+import sys
 import torch.nn.functional as F
+sys.path.append('..')
+from image_sort import VGGPerceptualLoss
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -46,15 +49,25 @@ def laplacian_pyramid(img, kernel, max_levels=3):
     return pyr
 
 class LapLoss(torch.nn.Module):
-    def __init__(self, max_levels=5, channels=3):
+    def __init__(self, use_perceptual_loss, max_levels=5, channels=3):
         super(LapLoss, self).__init__()
         self.max_levels = max_levels
         self.gauss_kernel = gauss_kernel(channels=channels)
+        self.use_perceptual_loss = use_perceptual_loss
+        self.loss_fn = VGGPerceptualLoss().cuda()
         
     def forward(self, input, target):
+
         pyr_input  = laplacian_pyramid(img=input, kernel=self.gauss_kernel, max_levels=self.max_levels)
         pyr_target = laplacian_pyramid(img=target, kernel=self.gauss_kernel, max_levels=self.max_levels)
-        return sum(torch.nn.functional.l1_loss(a, b) for a, b in zip(pyr_input, pyr_target))
+        loss_l1 = sum(torch.nn.functional.l1_loss(a, b) for a, b in zip(pyr_input, pyr_target))
+        loss_perc = 0
+        loss_total = loss_l1
+        if self.use_perceptual_loss:
+            loss_perc = self.loss_fn(input, target)
+            #loss_perc =  sum(self.lossfn(a, b) for a, b in zip(pyr_input, pyr_target))
+            loss_total = 0.5 * loss_l1 + 0.5 * loss_perc
+        return loss_l1, loss_perc, loss_total
 
 class Ternary(nn.Module):
     def __init__(self, device):

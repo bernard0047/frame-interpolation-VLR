@@ -51,8 +51,12 @@ class VGGPerceptualLoss(torch.nn.Module):
             [0.229, 0.224, 0.225]).view(1, 3, 1, 1))
 
     def forward(self, input, target, feature_layers=[0, 1, 2, 3], style_layers=[]):
-        input = input.permute(2, 0, 1).unsqueeze(0)
-        target = target.permute(2, 0, 1).unsqueeze(0)
+        #print("input:", input.shape, target.shape)
+
+        #input = input.permute(0, 3, 1, 2).unsqueeze(0)
+        
+        #target = target.permute(0, 3, 1, 2).unsqueeze(0)
+
         # if input.shape[1] != 3:
         #     input = input.repeat(1, 3, 1, 1)
         #     target = target.repeat(1, 3, 1, 1)

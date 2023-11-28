@@ -66,15 +66,17 @@ def train(model, local_rank, batch_size, data_path):
             timestep = timestep.to(device, non_blocking=True)
             imgs, gt = imgs[:, 0:6], imgs[:, 6:]
             learning_rate = get_learning_rate(step)
-            _, loss = model.update(imgs, gt, learning_rate, training=True,timestep = timestep)
+            _, loss_l1, loss_perc, loss_total = model.update(imgs, gt, learning_rate, training=True,timestep = timestep)
             train_time_interval = time.time() - time_stamp
             time_stamp = time.time()
             if step % 200 == 1 and local_rank == 0:
                 writer.add_scalar('learning_rate', learning_rate, step)
-                writer.add_scalar('loss', loss, step)
+                writer.add_scalar('loss', loss_l1, step)
+                writer.add_scalar('loss', loss_perc, step)
+                writer.add_scalar('loss', loss_total, step)
             if local_rank == 0:
-                print('epoch:{} {}/{} time:{:.2f}+{:.2f} loss:{:.4e}'.format(epoch, i,
-                      args.step_per_epoch, data_time_interval, train_time_interval, loss))
+                print('epoch:{} {}/{} time:{:.2f}+{:.2f} loss_l1:{:.4e} loss_perc:{:.4e} loss_total:{:.4e}'.format(epoch, i,
+                      args.step_per_epoch, data_time_interval, train_time_interval, loss_l1, loss_perc, loss_total))
             step += 1
         nr_eval += 1
         if nr_eval % 10 == 0:
@@ -115,14 +117,16 @@ if __name__ == "__main__":
 
     parser.add_argument('--multi_interpolate', default=True, type=bool,
                         help='True if multi interpolation dataloder else single')
-    parser.add_argument('--batch_size', default=24,
+    parser.add_argument('--batch_size', default=8,
                         type=int, help='batch size')
-    parser.add_argument('--data_path', default='/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/data/clean/dataset',
+    parser.add_argument('--data_path', default='/home/ubuntu/frame-interpolation-VLR/emavfi/dataset',
                         type=str, help='data path of co3d')
     parser.add_argument('--tg_frames', default=18, type=int,
                         help='number of frames to generate 3D from')
     parser.add_argument('--train_im_size', default=384,
                         type=int, help='training resolution')
+    parser.add_argument('--perceptual_loss', default=True,
+                        type=bool, help='use perceptual loss if true')
 
     args = parser.parse_args()
     torch.distributed.init_process_group(
@@ -145,5 +149,5 @@ if __name__ == "__main__":
     torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.benchmark = True
     
-    model = Model(args.local_rank)
+    model = Model(args.local_rank, args.perceptual_loss)
     train(model, args.local_rank, args.batch_size, args.data_path)
