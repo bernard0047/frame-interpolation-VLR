@@ -12,7 +12,7 @@ class Model:
     def __init__(self, local_rank, use_perceptual_loss,device="cuda:0"):
         backbonetype, multiscaletype = MODEL_CONFIG['MODEL_TYPE']
         backbonecfg, multiscalecfg = MODEL_CONFIG['MODEL_ARCH']
-        self.net = multiscaletype(backbonetype(**backbonecfg), **multiscalecfg)
+        self.net = multiscaletype(backbonetype(**backbonecfg),device, **multiscalecfg)
         self.name = MODEL_CONFIG['LOGNAME']
         self.use_perceptual_loss = use_perceptual_loss
         self.device = device
@@ -49,8 +49,9 @@ class Model:
             # self.net.load_state_dict(convert(torch.load('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/emavfi/ckpt/ours_small.pkl')))
             # self.net.load_state_dict(convert(torch.load('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/baseline_ckpt/ours_t.pkl')))
 
-            self.net.load_state_dict(convert(torch.load(f'/home/xinyu/16824/project/frame-interpolation-VLR/emavfi/ckpt/ours_small_99_arpit.pkl')))
-            
+            # self.net.load_state_dict(convert(torch.load(f'/home/xinyu/16824/project/frame-interpolation-VLR/emavfi/ckpt/ours_small_99_arpit.pkl')))
+            self.net.load_state_dict(convert(torch.load(f'/home/xinyu/16824/project/frame-interpolation-VLR/emavfi/ckpt/ours_small_99_arpit.pkl', map_location=self.device)))
+
             
     def save_model(self, epoch,rank=0):
         if rank == 0:

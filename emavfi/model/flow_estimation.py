@@ -43,7 +43,7 @@ class Head(nn.Module):
 
     
 class MultiScaleFlow(nn.Module):
-    def __init__(self, backbone, **kargs):
+    def __init__(self, backbone, device,**kargs):
         super(MultiScaleFlow, self).__init__()
         self.flow_num_stage = len(kargs['hidden_dims'])
         self.feature_bone = backbone
@@ -53,14 +53,14 @@ class MultiScaleFlow(nn.Module):
                             6 if i==0 else 17) 
                             for i in range(self.flow_num_stage)])
         self.unet = Unet(kargs['c'] * 2)
-
+        self.device = device
     def warp_features(self, xs, flow):
         y0 = []
         y1 = []
         B = xs[0].size(0) // 2
         for x in xs:
-            y0.append(warp(x[:B], flow[:, 0:2]))
-            y1.append(warp(x[B:], flow[:, 2:4]))
+            y0.append(warp(x[:B], flow[:, 0:2],self.device))
+            y1.append(warp(x[B:], flow[:, 2:4],self.device))
             flow = F.interpolate(flow, scale_factor=0.5, mode="bilinear", align_corners=False, recompute_scale_factor=False) * 0.5
         return y0, y1
 
@@ -72,10 +72,10 @@ class MultiScaleFlow(nn.Module):
         if (af is None) or (mf is None):
             af, mf = self.feature_bone(img0, img1)
         for i in range(self.flow_num_stage):
-            t = torch.full(mf[-1-i][:B].shape, timestep, dtype=torch.float).cuda()
+            t = torch.full(mf[-1-i][:B].shape, timestep, dtype=torch.float).to(self.device)
             if flow != None:
-                warped_img0 = warp(img0, flow[:, :2])
-                warped_img1 = warp(img1, flow[:, 2:4])
+                warped_img0 = warp(img0, flow[:, :2],self.device)
+                warped_img1 = warp(img1, flow[:, 2:4],self.device)
                 flow_, mask_ = self.block[i](
                     torch.cat([t*mf[-1-i][:B],(1-t)*mf[-1-i][B:],af[-1-i][:B],af[-1-i][B:]],1),
                     torch.cat((img0, img1, warped_img0, warped_img1, mask), 1),
@@ -94,8 +94,8 @@ class MultiScaleFlow(nn.Module):
 
     def coraseWarp_and_Refine(self, imgs, af, flow, mask):
         img0, img1 = imgs[:, :3], imgs[:, 3:6]
-        warped_img0 = warp(img0, flow[:, :2])
-        warped_img1 = warp(img1, flow[:, 2:4])
+        warped_img0 = warp(img0, flow[:, :2],self.device)
+        warped_img1 = warp(img1, flow[:, 2:4],self.device)
         c0, c1 = self.warp_features(af, flow)
         tmp = self.unet(img0, img1, warped_img0, warped_img1, mask, flow, c0, c1)
         res = tmp[:, :3] * 2 - 1
@@ -120,7 +120,7 @@ class MultiScaleFlow(nn.Module):
         for i in range(self.flow_num_stage):
             # t = torch.full(mf[-1-i][:B].shape, timestep, dtype=torch.float).cuda()
             t=  [torch.full(mf[-1-i][:B].shape[1:], timestep[j],dtype = torch.float)[None] for j in range(len(timestep))]
-            t = torch.cat(t,0).cuda()
+            t = torch.cat(t,0).to(self.device)
             if flow != None:
                 flow_d, mask_d = self.block[i]( torch.cat([t*mf[-1-i][:B], (1-t)*mf[-1-i][B:],af[-1-i][:B],af[-1-i][B:]],1), 
                                                 torch.cat((img0, img1, warped_img0, warped_img1, mask), 1), flow)
@@ -131,8 +131,8 @@ class MultiScaleFlow(nn.Module):
                                             torch.cat((img0, img1), 1), None)
             mask_list.append(torch.sigmoid(mask))
             flow_list.append(flow)
-            warped_img0 = warp(img0, flow[:, :2])
-            warped_img1 = warp(img1, flow[:, 2:4])
+            warped_img0 = warp(img0, flow[:, :2],self.device)
+            warped_img1 = warp(img1, flow[:, 2:4],self.device)
             merged.append(warped_img0 * mask_list[i] + warped_img1 * (1 - mask_list[i]))
         
         c0, c1 = self.warp_features(af, flow)

@@ -15,7 +15,7 @@ from natsort import natsorted
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--n', default=12, type=int)
-    parser.add_argument('--input_dir', default='/raid/xinyu/vlr/dataset/train/110_13051_23361', type=str)
+    parser.add_argument('--input_dir', default='/raid/xinyu/vlr/dataset/train/110_13051_23361/images', type=str)
     parser.add_argument('--output_dir', default='/home/xinyu/16824/project/frame-interpolation-VLR/emavfi/interpolations/110_13051_23361', type=str)
     parser.add_argument('--verbose', default=True, type=bool)
     parser.add_argument('--device', default="cuda:2", type=str)
@@ -25,8 +25,8 @@ def get_args():
 
 def run_interpolation_pair(args, model, I0, I2):
     TTA = True
-    I0_ = (torch.tensor(I0.transpose(2, 0, 1)).cuda() / 255.).unsqueeze(0)
-    I2_ = (torch.tensor(I2.transpose(2, 0, 1)).cuda() / 255.).unsqueeze(0)
+    I0_ = (torch.tensor(I0.transpose(2, 0, 1)).to(args.device) / 255.).unsqueeze(0)
+    I2_ = (torch.tensor(I2.transpose(2, 0, 1)).to(args.device) / 255.).unsqueeze(0)
 
     padder = InputPadder(I0_.shape, divisor=32)
     I0_, I2_ = padder.pad(I0_, I2_)
@@ -50,7 +50,7 @@ def run_interpolation(args):
     model = Model(-1,use_perceptual_loss=True,device=args.device)
     model.load_model()
     model.eval()
-    model.device()
+    model.get_device()
 
     img_list = glob(args.input_dir+'/*')
     img_path_list = natsorted(img_list)
