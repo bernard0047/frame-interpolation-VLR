@@ -9,17 +9,18 @@ from config import *
 
     
 class Model:
-    def __init__(self, local_rank, use_perceptual_loss):
+    def __init__(self, local_rank, use_perceptual_loss,device="cuda:0"):
         backbonetype, multiscaletype = MODEL_CONFIG['MODEL_TYPE']
         backbonecfg, multiscalecfg = MODEL_CONFIG['MODEL_ARCH']
         self.net = multiscaletype(backbonetype(**backbonecfg), **multiscalecfg)
         self.name = MODEL_CONFIG['LOGNAME']
         self.use_perceptual_loss = use_perceptual_loss
-        self.device()
+        self.device = device
+        self.get_device()
 
         # train
         self.optimG = AdamW(self.net.parameters(), lr=2e-4, weight_decay=1e-4)
-        self.lap = LapLoss(self.use_perceptual_loss)
+        self.lap = LapLoss(self.use_perceptual_loss,device)
         if local_rank != -1:
             self.net = DDP(self.net, device_ids=[local_rank], output_device=local_rank)
 
@@ -29,8 +30,8 @@ class Model:
     def eval(self):
         self.net.eval()
 
-    def device(self):
-        self.net.to(torch.device("cuda"))
+    def get_device(self):
+        self.net.to(torch.device(self.device))
 
     def load_model(self, name=None, rank=0):
         def convert(param):
@@ -48,7 +49,7 @@ class Model:
             # self.net.load_state_dict(convert(torch.load('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/emavfi/ckpt/ours_small.pkl')))
             # self.net.load_state_dict(convert(torch.load('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/baseline_ckpt/ours_t.pkl')))
 
-            self.net.load_state_dict(convert(torch.load(f'/home/ubuntu/frame-interpolation-VLR/emavfi/ckpt/ours_small_t.pkl')))
+            self.net.load_state_dict(convert(torch.load(f'/home/xinyu/16824/project/frame-interpolation-VLR/emavfi/ckpt/ours_small_99_arpit.pkl')))
             
             
     def save_model(self, epoch,rank=0):

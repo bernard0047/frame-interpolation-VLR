@@ -15,9 +15,10 @@ from natsort import natsorted
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--n', default=12, type=int)
-    parser.add_argument('--input_dir', default='/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/data/dataset/apple/110_13051_23361_18', type=str)
-    parser.add_argument('--output_dir', default='/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/emavfi/interpolations/inter_multi_large_110_13051_23361_36', type=str)
+    parser.add_argument('--input_dir', default='/raid/xinyu/vlr/dataset/train/110_13051_23361', type=str)
+    parser.add_argument('--output_dir', default='/home/xinyu/16824/project/frame-interpolation-VLR/emavfi/interpolations/110_13051_23361', type=str)
     parser.add_argument('--verbose', default=True, type=bool)
+    parser.add_argument('--device', default="cuda:2", type=str)
     args = parser.parse_args()
     return args
 
@@ -46,7 +47,7 @@ def run_interpolation(args):
         F=32,
         depth=[2, 2, 2, 4, 4]
     )
-    model = Model(-1)
+    model = Model(-1,use_perceptual_loss=True,device=args.device)
     model.load_model()
     model.eval()
     model.device()

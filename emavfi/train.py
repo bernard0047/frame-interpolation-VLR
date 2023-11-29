@@ -25,14 +25,20 @@ exp = os.path.abspath('.').split('/')[-1]
 
 
 
-def get_learning_rate(step):
-    if step < 2000:
-        mul = step / 2000
-        return 2e-4 * mul
+def get_learning_rate(step, args):
+    total_steps = 100 * args.step_per_epoch  
+    warmup_steps = args.step_per_epoch * 5 
+    peak_lr = 1e-4  
+    base_lr = 2e-5 
+
+    if step < warmup_steps:
+        
+        mul = step / warmup_steps
+        return base_lr + (peak_lr - base_lr) * mul
     else:
-        mul = np.cos((step - 2000) /
-                     (300 * args.step_per_epoch - 2000) * math.pi) * 0.5 + 0.5
-        return (2e-4 - 2e-5) * mul + 2e-5
+        
+        mul = (np.cos((step - warmup_steps) / (total_steps - warmup_steps) * math.pi) + 1) / 2
+        return (peak_lr - base_lr) * mul + base_lr
 
 
 def train(model, local_rank, batch_size, data_path):
@@ -65,15 +71,15 @@ def train(model, local_rank, batch_size, data_path):
             imgs = imgs.to(device, non_blocking=True) / 255.
             timestep = timestep.to(device, non_blocking=True)
             imgs, gt = imgs[:, 0:6], imgs[:, 6:]
-            learning_rate = get_learning_rate(step)
+            learning_rate = get_learning_rate(step,args)
             _, loss_l1, loss_perc, loss_total = model.update(imgs, gt, learning_rate, training=True,timestep = timestep)
             train_time_interval = time.time() - time_stamp
             time_stamp = time.time()
             if step % 200 == 1 and local_rank == 0:
                 writer.add_scalar('learning_rate', learning_rate, step)
-                writer.add_scalar('loss', loss_l1, step)
-                writer.add_scalar('loss', loss_perc, step)
-                writer.add_scalar('loss', loss_total, step)
+                writer.add_scalar('loss_l1', loss_l1, step)
+                writer.add_scalar('loss_perc', loss_perc, step)
+                writer.add_scalar('loss_total', loss_total, step)
             if local_rank == 0:
                 print('epoch:{} {}/{} time:{:.2f}+{:.2f} loss_l1:{:.4e} loss_perc:{:.4e} loss_total:{:.4e}'.format(epoch, i,
                       args.step_per_epoch, data_time_interval, train_time_interval, loss_l1, loss_perc, loss_total))
@@ -117,9 +123,9 @@ if __name__ == "__main__":
 
     parser.add_argument('--multi_interpolate', default=True, type=bool,
                         help='True if multi interpolation dataloder else single')
-    parser.add_argument('--batch_size', default=8,
+    parser.add_argument('--batch_size', default=32,
                         type=int, help='batch size')
-    parser.add_argument('--data_path', default='/home/ubuntu/frame-interpolation-VLR/emavfi/dataset',
+    parser.add_argument('--data_path', default='/raid/xinyu/vlr/dataset',
                         type=str, help='data path of co3d')
     parser.add_argument('--tg_frames', default=18, type=int,
                         help='number of frames to generate 3D from')
