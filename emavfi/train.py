@@ -20,8 +20,8 @@ import datetime
 
 device = torch.device("cuda")
 exp = os.path.abspath('.').split('/')[-1]
-# os.environ['MASTER_ADDR'] = 'localhost'
-# os.environ['MASTER_PORT'] = '12345'
+os.environ['MASTER_ADDR'] = 'localhost'
+os.environ['MASTER_PORT'] = '12345'
 
 
 
@@ -43,7 +43,7 @@ def get_learning_rate(step, args):
 
 def train(model, local_rank, batch_size, data_path):
     if local_rank == 0:
-        writer = SummaryWriter('log/train_EMAVFI')
+        writer = SummaryWriter('log/train_EMAVFI_200_epoch_cosine')
     step = 0
     nr_eval = 0
     best = 0
@@ -93,7 +93,7 @@ def train(model, local_rank, batch_size, data_path):
 
 def evaluate(model, val_data, nr_eval, local_rank):
     if local_rank == 0:
-        writer_val = SummaryWriter('log/validate_EMAVFI')
+        writer_val = SummaryWriter('log/validate_EMAVFI_fixed_lr')
 
     psnr = []
     for _, cat_imgs in enumerate(val_data):
@@ -123,7 +123,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--multi_interpolate', default=True, type=bool,
                         help='True if multi interpolation dataloder else single')
-    parser.add_argument('--batch_size', default=32,
+    parser.add_argument('--batch_size', default=1,
                         type=int, help='batch size')
     parser.add_argument('--data_path', default='/raid/xinyu/vlr/dataset',
                         type=str, help='data path of co3d')
@@ -135,16 +135,16 @@ if __name__ == "__main__":
                         type=bool, help='use perceptual loss if true')
 
     args = parser.parse_args()
-    torch.distributed.init_process_group(
-        backend="nccl", world_size=args.world_size)
     # torch.distributed.init_process_group(
-    #         backend='nccl',
-    #         init_method='env://',
-    #         timeout=datetime.timedelta(0, 1800),
-    #         world_size=args.world_size,
-    #         rank=0,
-    #         store=None,
-    #         group_name='')
+    #     backend="nccl", world_size=args.world_size)
+    torch.distributed.init_process_group(
+            backend='nccl',
+            init_method='env://',
+            timeout=datetime.timedelta(0, 1800),
+            world_size=args.world_size,
+            rank=0,
+            store=None,
+            group_name='')
     torch.cuda.set_device(args.local_rank)
     if args.local_rank == 0 and not os.path.exists('log'):
         os.mkdir('log')
