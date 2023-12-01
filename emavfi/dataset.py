@@ -33,12 +33,13 @@ class CO3dDataset(Dataset):
     def get_packs(self, objects):
         packs = []
         for obj in objects:
-            ims = natsorted(glob(obj+'/images/*'))
-            pack_size = len(ims)//self.tg_frames
-            for i in range(0, len(ims)-pack_size):
-                packs.append(ims[i:i+pack_size])
+            ims = natsorted(glob(obj + "/images/*"))
+            pack_size = len(ims) // self.tg_frames
+            if pack_size <= 1:
+                continue
+            for i in range(0, len(ims) - pack_size, pack_size):
+                packs.append(ims[i : i + pack_size])
         return packs
-
     # def is_black(self, frame):
     #     return frame.mean() < 20
 
@@ -147,11 +148,13 @@ class CO3dDataset(Dataset):
 
 if __name__ == "__main__":
 
-    dataset = CO3dDataset('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/data/clean/dataset', 18, 256, multi=True, train=True)
+    dataset = CO3dDataset('/home/arpitsah/Desktop/vlr_project/dataset/dataset', 18, 256, multi=True, train=True)
     print(dataset.__len__())
-    for i in range(5):
+    for i in range(dataset.__len__()):
         item = dataset.__getitem__(i)
+        print(item[1].shape)
         print(item[0].shape, item[1])
+        
 # sampler = DistributedSampler(dataset)
 # train_data = DataLoader(dataset, batch_size=2,
 #                         num_workers=1, pin_memory=True, drop_last=True)

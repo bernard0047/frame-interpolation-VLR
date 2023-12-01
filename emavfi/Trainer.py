@@ -4,7 +4,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.optim import AdamW
 from model.loss import *
 from model.warplayer import warp
-
+import os
 from config import *
 
     
@@ -56,6 +56,7 @@ class Model:
             
     def save_model(self, epoch,rank=0):
         if rank == 0:
+            os.makedirs('ckpt',exist_ok = True)
             torch.save(self.net.state_dict(),f'ckpt/{self.name}_ours_small_t_{epoch}.pkl')
 
     @torch.no_grad()
