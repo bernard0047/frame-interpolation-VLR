@@ -28,7 +28,7 @@ import torchvision
 
 
 class VGGPerceptualLoss(torch.nn.Module):
-    def __init__(self, resize=True):
+    def __init__(self, resize=True,use_style= False):
         super(VGGPerceptualLoss, self).__init__()
         blocks = []
         blocks.append(torchvision.models.vgg16(
@@ -45,12 +45,14 @@ class VGGPerceptualLoss(torch.nn.Module):
         self.blocks = torch.nn.ModuleList(blocks)
         self.transform = torch.nn.functional.interpolate
         self.resize = resize
+        self.use_style = use_style
+        self.style_layers = [2,3] if self.use_style  == True else []
         self.register_buffer("mean", torch.tensor(
             [0.485, 0.456, 0.406]).view(1, 3, 1, 1))
         self.register_buffer("std", torch.tensor(
             [0.229, 0.224, 0.225]).view(1, 3, 1, 1))
 
-    def forward(self, input, target, feature_layers=[0, 1, 2, 3], style_layers=[2,3]):
+    def forward(self, input, target, feature_layers=[0, 1, 2, 3]):
         input = (input-self.mean) / self.std
         target = (target-self.mean) / self.std
         if self.resize:
@@ -66,7 +68,7 @@ class VGGPerceptualLoss(torch.nn.Module):
             y = block(y)
             if i in feature_layers:
                 loss += torch.nn.functional.l1_loss(x, y)
-            if i in style_layers:
+            if i in self.style_layers:
                 act_x = x.reshape(x.shape[0], x.shape[1], -1)
                 act_y = y.reshape(y.shape[0], y.shape[1], -1)
                 gram_x = act_x @ act_x.permute(0, 2, 1)

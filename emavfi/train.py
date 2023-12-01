@@ -26,17 +26,17 @@ os.environ['MASTER_PORT'] = '12345'
 
 
 def get_learning_rate(step, args):
-    total_steps = 100 * args.step_per_epoch  
-    warmup_steps = args.step_per_epoch * 5 
-    peak_lr = 1e-4  
-    base_lr = 2e-5 
+    total_steps = 100 * args.step_per_epoch
+    warmup_steps = args.step_per_epoch * 5
+    peak_lr = 1e-4
+    base_lr = 2e-5
 
     if step < warmup_steps:
-        
+
         mul = step / warmup_steps
         return base_lr + (peak_lr - base_lr) * mul
     else:
-        
+
         mul = (np.cos((step - warmup_steps) / (total_steps - warmup_steps) * math.pi) + 1) / 2
         return (peak_lr - base_lr) * mul + base_lr
 
@@ -67,7 +67,7 @@ def train(model, local_rank, batch_size, data_path):
         for i, cat_imgs in enumerate(train_data):
             data_time_interval = time.time() - time_stamp
             time_stamp = time.time()
-            imgs, timestep = cat_imgs 
+            imgs, timestep = cat_imgs
             imgs = imgs.to(device, non_blocking=True) / 255.
             timestep = timestep.to(device, non_blocking=True)
             imgs, gt = imgs[:, 0:6], imgs[:, 6:]
@@ -97,15 +97,15 @@ def evaluate(model, val_data, nr_eval, local_rank):
 
     psnr = []
     for _, cat_imgs in enumerate(val_data):
-        imgs, timestep = cat_imgs 
+        imgs, timestep = cat_imgs
         imgs = imgs.to(device, non_blocking=True) / 255.
         imgs, gt = imgs[:, 0:6], imgs[:, 6:]
         with torch.no_grad():
             pred, _ = model.update(imgs, gt, training=False,timestep=timestep)
         for j in range(gt.shape[0]):
             #  psnr.append(-10 * math.log10(max(1e-10, ((gt[j] - pred[j])**2).mean().cpu().item())))
-            
-            
+
+
             psnr.append(-10 * math.log10(max(1e-10, ((gt[j] - pred[j])**2).mean().cpu().item())))
 
 
@@ -123,15 +123,17 @@ if __name__ == "__main__":
 
     parser.add_argument('--multi_interpolate', default=True, type=bool,
                         help='True if multi interpolation dataloder else single')
-    parser.add_argument('--batch_size', default=1,
+    parser.add_argument('--batch_size', default=18,
                         type=int, help='batch size')
-    parser.add_argument('--data_path', default='/raid/xinyu/vlr/dataset',
+    parser.add_argument('--data_path', default='/home/arpitsah/Desktop/vlr_project/dataset/dataset',
                         type=str, help='data path of co3d')
     parser.add_argument('--tg_frames', default=18, type=int,
                         help='number of frames to generate 3D from')
     parser.add_argument('--train_im_size', default=384,
                         type=int, help='training resolution')
-    parser.add_argument('--perceptual_loss', default=True,
+    parser.add_argument('--perceptual_loss', default=False,
+                        type=bool, help='use perceptual loss if true')
+    parser.add_argument('--perceptual_loss_with_style', default=False,
                         type=bool, help='use perceptual loss if true')
 
     args = parser.parse_args()
@@ -154,6 +156,6 @@ if __name__ == "__main__":
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.benchmark = True
-    
-    model = Model(args.local_rank, args.perceptual_loss)
+
+    model = Model(local_rank=args.local_rank, use_perceptual_loss=args.perceptual_loss,use_style=args.perceptual_loss_with_style)
     train(model, args.local_rank, args.batch_size, args.data_path)

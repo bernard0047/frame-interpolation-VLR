@@ -9,18 +9,19 @@ from config import *
 
     
 class Model:
-    def __init__(self, local_rank, use_perceptual_loss,device="cuda:0"):
+    def __init__(self, local_rank, use_perceptual_loss,device="cuda:0",use_style= False):
         backbonetype, multiscaletype = MODEL_CONFIG['MODEL_TYPE']
         backbonecfg, multiscalecfg = MODEL_CONFIG['MODEL_ARCH']
         self.net = multiscaletype(backbonetype(**backbonecfg),device, **multiscalecfg)
         self.name = MODEL_CONFIG['LOGNAME']
         self.use_perceptual_loss = use_perceptual_loss
+        self.use_style = use_style
         self.device = device
         self.get_device()
 
         # train
         self.optimG = AdamW(self.net.parameters(), lr=2e-4, weight_decay=1e-4)
-        self.lap = LapLoss(self.use_perceptual_loss,device)
+        self.lap = LapLoss(use_perceptual_loss=self.use_perceptual_loss,use_style=self.use_style,device="cuda:0")
         if local_rank != -1:
             self.net = DDP(self.net, device_ids=[local_rank], output_device=local_rank)
 
@@ -47,15 +48,15 @@ class Model:
             # self.net.load_state_dict(convert(torch.load('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/baseline_ckpt/ours_small.pkl')))
             #self.net.load_state_dict(convert(torch.load('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/baseline_ckpt/ours_small_t.pkl')))
             # self.net.load_state_dict(convert(torch.load('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/emavfi/ckpt/ours_small.pkl')))
-            # self.net.load_state_dict(convert(torch.load('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/baseline_ckpt/ours_t.pkl')))
+            self.net.load_state_dict(convert(torch.load('/home/arpitsah/Desktop/vlr_project/frame-interpolation-VLR/baseline_ckpt/ours_small_t.pkl')))
 
             # self.net.load_state_dict(convert(torch.load(f'/home/xinyu/16824/project/frame-interpolation-VLR/emavfi/ckpt/ours_small_99_arpit.pkl')))
-            self.net.load_state_dict(convert(torch.load(f'/home/arpitsah/Desktop/vlr_project/frame-interpolation-VLR/EMA_VFI weights/ours_small_ours_small_t_epoch_99.pkl', map_location=self.device)))
+            # self.net.load_state_dict(convert(torch.load(f'/home/arpitsah/Desktop/vlr_project/frame-interpolation-VLR/EMA_VFI weights/ours_small_ours_small_t_epoch_99.pkl', map_location=self.device)))
 
             
     def save_model(self, epoch,rank=0):
         if rank == 0:
-            torch.save(self.net.state_dict(),f'ckpt/{self.name}_ours_small_t_100+_{epoch}.pkl')
+            torch.save(self.net.state_dict(),f'ckpt/{self.name}_ours_small_t_{epoch}.pkl')
 
     @torch.no_grad()
     def hr_inference(self, img0, img1, TTA = False, down_scale = 1.0, timestep = 0.5, fast_TTA = False):
@@ -163,7 +164,7 @@ class Model:
             
             loss_l1, loss_perc, loss_total = self.lap(pred, gt)
             loss_l1 = loss_l1.mean()
-            loss_perc - loss_perc.mean()
+            loss_perc = loss_perc.mean()
             loss_total = loss_total.mean()
 
             for merge in merged:

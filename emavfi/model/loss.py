@@ -3,7 +3,7 @@ import torch.nn as nn
 import numpy as np 
 import sys
 import torch.nn.functional as F
-sys.path.append('..')
+sys.path.append('/home/arpitsah/Desktop/vlr_project/frame-interpolation-VLR')
 from image_sort import VGGPerceptualLoss
 
 # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -29,7 +29,7 @@ def upsample(device,x):
     cc = torch.cat([cc, torch.zeros(x.shape[0], x.shape[1], x.shape[3], x.shape[2]*2).to(device)], dim=3)
     cc = cc.view(x.shape[0], x.shape[1], x.shape[3]*2, x.shape[2]*2)
     x_up = cc.permute(0,1,3,2)
-    return conv_gauss(x_up, 4*gauss_kernel(channels=x.shape[1]))
+    return conv_gauss(x_up, 4*gauss_kernel(device = device,channels=x.shape[1]))
 
 def conv_gauss(img, kernel):
     img = torch.nn.functional.pad(img, (2, 2, 2, 2), mode='reflect')
@@ -49,19 +49,19 @@ def laplacian_pyramid(device,img, kernel, max_levels=3):
     return pyr
 
 class LapLoss(torch.nn.Module):
-    def __init__(self,use_perceptual_loss, device = "cuda:0",max_levels=5, channels=3):
+    def __init__(self,use_perceptual_loss=False, use_style=False,device = "cuda:0",max_levels=5, channels=3):
         super(LapLoss, self).__init__()
         self.max_levels = max_levels
         self.gauss_kernel = gauss_kernel(device,channels=channels)
         self.use_perceptual_loss = use_perceptual_loss
-        self.loss_fn = VGGPerceptualLoss().to(device)
+        self.loss_fn = VGGPerceptualLoss(use_style=use_style).to(device)
         self.device = device
     def forward(self, input, target):
 
         pyr_input  = laplacian_pyramid(self.device,img=input, kernel=self.gauss_kernel, max_levels=self.max_levels)
         pyr_target = laplacian_pyramid(self.device,img=target, kernel=self.gauss_kernel, max_levels=self.max_levels)
         loss_l1 = sum(torch.nn.functional.l1_loss(a, b) for a, b in zip(pyr_input, pyr_target))
-        loss_perc = 0
+        loss_perc = torch.Tensor([0])
         loss_total = loss_l1
         if self.use_perceptual_loss:
             loss_perc = self.loss_fn(input, target)
