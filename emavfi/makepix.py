@@ -13,12 +13,12 @@ from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from torchvision.utils import save_image
 from utils import *
-
+import shutil
 cv2.setNumThreads(1)
 import config as cfg
 
-# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-device = torch.device("cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# device = torch.device("cpu")
 
 from Trainer import Model
 
@@ -83,29 +83,49 @@ def convert(param):
 
 
 if __name__ == "__main__":
-    dataset = CO3dDataset("../dataset/dataset", 18, 350, multi=True, train=True)
+    os.makedirs("../../pix2pixdata/train_A/", exist_ok=True)
+    os.makedirs("../../pix2pixdata/train_B/", exist_ok=True)
+    dataset = CO3dDataset("../../dataset", 18, 350, multi=True, train=True)
     cfg.MODEL_CONFIG["LOGNAME"] = "ours_small_t"
     cfg.MODEL_CONFIG["MODEL_ARCH"] = cfg.init_model_config(F=16, depth=[2, 2, 2, 2, 2])
-
-    model = Model(-1)
+    TTA = False
+    model = Model(-1, False)
     model.load_model()
     model.eval()
-    model.device()
-    for item in dataset:
+    model.get_device()
+    count = 0
+    for item in tqdm(dataset):
         pack = item[0]
         times = item[1]
         # print(pack, times)
         # break
         I0 = cv2.imread(pack[0])
         I2 = cv2.imread(pack[-1])
+        org_size = I0.shape
+        I0 = cv2.resize(I0, (384, 384))
+        I2 = cv2.resize(I2, (384, 384))
+        # print(org_size)
 
-        I0_ = (torch.tensor(I0.transpose(2, 0, 1)) / 255.0).unsqueeze(0)
-        I2_ = (torch.tensor(I2.transpose(2, 0, 1)) / 255.0).unsqueeze(0)
+        I0_ = (torch.tensor(I0.transpose(2, 0, 1)) / 255.0).unsqueeze(0).cuda()
+        I2_ = (torch.tensor(I2.transpose(2, 0, 1)) / 255.0).unsqueeze(0).cuda()
         padder = InputPadder(I0_.shape, divisor=32)
         I0_, I2_ = padder.pad(I0_, I2_)
         preds = model.multi_inference(I0_, I2_, TTA=TTA, time_list=times, fast_TTA=TTA)
-        print(preds.shape)
-        break
+        # print(I0_.shape, I2_.shape)
+        
+        for i, pred in enumerate(preds):
+            im = (pred.squeeze().permute(1, 2, 0) * 255.0 ).cpu().numpy()
+            # im = cv2.resize(np.uint8(im), (org_size[1],org_size[0]))
+            cv2.imwrite(f"../../pix2pixdata/train_A/{count}.png", im)
+            imx = cv2.imread(pack[i+1])
+            imx = cv2.resize(imx, (384, 384))
+            cv2.imwrite(f"../../pix2pixdata/train_B/{count}.png", imx)
+            count+=1
+            
+            # shutil.copy(pack[i+1], f"../../pix2pixdata/train_B/{count}.png")
+            # break
+        # print(len(preds))
+        # break
     # net = Model(0)
     # net.load_state_dict(net.convert(torch.load(f"../infer_models/emavfi/ours_small_t.pkl")))
     # for _, imgs in enumerate(val_data):
