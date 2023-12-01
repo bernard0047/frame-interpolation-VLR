@@ -13,8 +13,12 @@ from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from torchvision.utils import save_image
 from utils import *
+
 cv2.setNumThreads(1)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+import config as cfg
+
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cpu")
 
 from Trainer import Model
 
@@ -59,13 +63,12 @@ class CO3dDataset(Dataset):
     def __getitem__(self, index):
         pack = self.packs[index]
         times = []
-        for i in range(1, len(pack)-1):
-            times.append((i - 0) * 1.0 / (len(pack) -1 + 1e-6))
+        for i in range(1, len(pack) - 1):
+            times.append((i - 0) * 1.0 / (len(pack) - 1 + 1e-6))
         return (pack, times)
         # img0 = cv2.imread(pack[0])
         # # gt = cv2.imread(pack[ind[1]])
         # img1 = cv2.imread(pack[-1])
-
 
         # img0 = torch.from_numpy(img0.copy()).permute(2, 0, 1)
         # img1 = torch.from_numpy(img1.copy()).permute(2, 0, 1)
@@ -81,20 +84,26 @@ def convert(param):
 
 if __name__ == "__main__":
     dataset = CO3dDataset("../dataset/dataset", 18, 350, multi=True, train=True)
+    cfg.MODEL_CONFIG["LOGNAME"] = "ours_small_t"
+    cfg.MODEL_CONFIG["MODEL_ARCH"] = cfg.init_model_config(F=16, depth=[2, 2, 2, 2, 2])
 
+    model = Model(-1)
+    model.load_model()
+    model.eval()
+    model.device()
     for item in dataset:
         pack = item[0]
         times = item[1]
-        print(pack, times)
+        # print(pack, times)
         # break
         I0 = cv2.imread(pack[0])
         I2 = cv2.imread(pack[-1])
 
-        I0_ = (torch.tensor(I0.transpose(2, 0, 1)).cuda() / 255.).unsqueeze(0)
-        I2_ = (torch.tensor(I2.transpose(2, 0, 1)).cuda() / 255.).unsqueeze(0)
+        I0_ = (torch.tensor(I0.transpose(2, 0, 1)) / 255.0).unsqueeze(0)
+        I2_ = (torch.tensor(I2.transpose(2, 0, 1)) / 255.0).unsqueeze(0)
         padder = InputPadder(I0_.shape, divisor=32)
         I0_, I2_ = padder.pad(I0_, I2_)
-        preds = model.multi_inference(I0_, I2_, TTA=TTA, time_list= times, fast_TTA=TTA)
+        preds = model.multi_inference(I0_, I2_, TTA=TTA, time_list=times, fast_TTA=TTA)
         print(preds.shape)
         break
     # net = Model(0)
