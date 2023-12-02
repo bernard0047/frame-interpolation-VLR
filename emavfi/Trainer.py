@@ -9,7 +9,7 @@ from config import *
 
     
 class Model:
-    def __init__(self, local_rank, use_perceptual_loss,device="cuda:0",use_style= False):
+    def __init__(self, local_rank, use_perceptual_loss,device="cuda:0",use_style= False,freeze=False):
         backbonetype, multiscaletype = MODEL_CONFIG['MODEL_TYPE']
         backbonecfg, multiscalecfg = MODEL_CONFIG['MODEL_ARCH']
         self.net = multiscaletype(backbonetype(**backbonecfg),device, **multiscalecfg)
@@ -22,8 +22,12 @@ class Model:
         # train
         self.optimG = AdamW(self.net.parameters(), lr=2e-4, weight_decay=1e-4)
         self.lap = LapLoss(use_perceptual_loss=self.use_perceptual_loss,use_style=self.use_style,device="cuda:0")
+        if freeze:
+           self.freeze_backbone()
         if local_rank != -1:
             self.net = DDP(self.net, device_ids=[local_rank], output_device=local_rank)
+        
+        
 
     def train(self):
         self.net.train()
@@ -150,6 +154,9 @@ class Model:
             return [(preds[i][0] + flip_pred[i][0].flip(1).flip(2))/2 for i in range(len(time_list))]
     
     def update(self, imgs, gt, learning_rate=0, training=True,timestep = 0.5):
+        
+
+        
         for param_group in self.optimG.param_groups:
             param_group['lr'] = learning_rate
         if training:
@@ -180,3 +187,10 @@ class Model:
             with torch.no_grad():
                 flow, mask, merged, pred = self.net(imgs,timestep= timestep)
                 return pred, 0
+    def freeze_backbone(self):
+        exclude_layers = ['unet','feature_bone.block2','feature_bone.block3','feature_bone.block1']
+        for name,param in self.net.named_parameters():
+            if any(exclude_layer in name for exclude_layer in exclude_layers):
+                param.requires_grad = True
+            else:
+                param.requires_grad = False

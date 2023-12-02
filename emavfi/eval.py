@@ -54,7 +54,7 @@ def evaluate_model(model, local_rank, batch_size, data_path):
     #                         pin_memory=True, drop_last=True, sampler=sampler)
     # args.step_per_epoch = train_data.__len__()
     dataset_val = CO3dDataset(root=args.data_path, tg_frames=args.tg_frames,
-                              in_size=args.eval_im_size, multi=args.multi_interpolate, train=False)
+                              in_size=args.eval_im_size, multi=args.multi_interpolate, train=True)
     val_data = DataLoader(dataset_val, batch_size=batch_size,
                           pin_memory=True, num_workers=8)
     print('Evaluating...')

@@ -41,20 +41,21 @@ def get_learning_rate(step, args):
         return (peak_lr - base_lr) * mul + base_lr
 
 
+
 def train(model, local_rank, batch_size, data_path):
     if local_rank == 0:
         cur_time =  time.time()
-        writer = SummaryWriter('log/train_EMAVFI_200_epoch_cosine_{cur_time}')
+        writer = SummaryWriter('log/train_EMAVFI_200_epoch_freezed_{cur_time}')
     step = 0
     nr_eval = 0
     best = 0
-    dataset = CO3dDataset(root=args.data_path, tg_frames=args.tg_frames,
+    dataset = CO3dDataset(root=data_path, tg_frames=args.tg_frames,
                           in_size=args.train_im_size, multi=args.multi_interpolate, train=True)
     sampler = DistributedSampler(dataset)
     train_data = DataLoader(dataset, batch_size=batch_size, num_workers=8,
                             pin_memory=True, drop_last=True, sampler=sampler)
     args.step_per_epoch = train_data.__len__()
-    dataset_val = CO3dDataset(root=args.data_path, tg_frames=args.tg_frames,
+    dataset_val = CO3dDataset(root=data_path, tg_frames=args.tg_frames,
                               in_size=args.train_im_size, multi=args.multi_interpolate, train=False)
     val_data = DataLoader(dataset_val, batch_size=batch_size,
                           pin_memory=True, num_workers=8)
@@ -94,7 +95,7 @@ def train(model, local_rank, batch_size, data_path):
 
 def evaluate(model, val_data, nr_eval, local_rank):
     if local_rank == 0:
-        writer_val = SummaryWriter('log/validate_EMAVFI_fixed_lr')
+        writer_val = SummaryWriter('log/validate_EMAVFI_fixed_lr_freezed')
 
     psnr = []
     for _, cat_imgs in enumerate(val_data):
@@ -104,10 +105,8 @@ def evaluate(model, val_data, nr_eval, local_rank):
         with torch.no_grad():
             pred, _ = model.update(imgs, gt, training=False,timestep=timestep)
         for j in range(gt.shape[0]):
-            #  psnr.append(-10 * math.log10(max(1e-10, ((gt[j] - pred[j])**2).mean().cpu().item())))
-
-
-            psnr.append(-10 * math.log10(max(1e-10, ((gt[j] - pred[j])**2).mean().cpu().item())))
+            val =(gt[j] - pred[j])**2
+            psnr.append(-10 * math.log10(val.mean().cpu().item()))
 
 
     psnr = np.array(psnr).mean()
@@ -136,6 +135,7 @@ if __name__ == "__main__":
                         type=bool, help='use perceptual loss if true')
     parser.add_argument('--perceptual_loss_with_style', default=False,
                         type=bool, help='use perceptual loss if true')
+    parser.add_argument('--freeze',default = True,type = bool,help = "freeze everthing except backbone and unet")
 
     args = parser.parse_args()
     torch.distributed.init_process_group(
@@ -158,5 +158,5 @@ if __name__ == "__main__":
     torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.benchmark = True
 
-    model = Model(local_rank=args.local_rank, use_perceptual_loss=args.perceptual_loss,use_style=args.perceptual_loss_with_style)
+    model = Model(local_rank=args.local_rank, use_perceptual_loss=args.perceptual_loss,use_style=args.perceptual_loss_with_style,freeze = args.freeze)
     train(model, args.local_rank, args.batch_size, args.data_path)

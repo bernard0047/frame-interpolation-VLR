@@ -509,21 +509,21 @@ class DWConv(nn.Module):
 
         return x
     
-class UpSampleConv2D(nn.Module):
-    def __init__(
-        self,
-        input_channels,
-        kernel_size=3,
-        n_filters=128,
-        upscale_factor=2,
-        padding=0,
-    ):
-        super(UpSampleConv2D, self).__init__()
-        self.conv = nn.Conv2d(
-            input_channels, n_filters, kernel_size=kernel_size, padding=padding
-        )
-        self.upscale_factor = upscale_factor
-        self.pixelshuffle = torch.nn.PixelShuffle(self.upscale_factor)
+# class UpSampleConv2D(nn.Module):
+#     def __init__(
+#         self,
+#         input_channels,
+#         kernel_size=3,
+#         n_filters=128,
+#         upscale_factor=2,
+#         padding=0,
+#     ):
+#         super(UpSampleConv2D, self).__init__()
+#         self.conv = nn.Conv2d(
+#             input_channels, n_filters, kernel_size=kernel_size, padding=padding
+#         )
+#         self.upscale_factor = upscale_factor
+#         self.pixelshuffle = torch.nn.PixelShuffle(self.upscale_factor)
 
 def feature_extractor(**kargs):
     model = MotionFormer(**kargs)
