@@ -15,13 +15,8 @@ from natsort import natsorted
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--n', default=12, type=int)
-<<<<<<< Updated upstream
-    parser.add_argument('--input_dir', default='/raid/xinyu/vlr/dataset/train/110_13051_23361/images', type=str)
-    parser.add_argument('--output_dir', default='/home/xinyu/16824/project/frame-interpolation-VLR/emavfi/interpolations/110_13051_23361', type=str)
-=======
     parser.add_argument('--input_dir', default='/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/data/dataset/apple/110_13051_23361_18', type=str)
-    parser.add_argument('--output_dir', default='/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/emavfi/interpolations/ft_base_arbitrary_110_13051_23361_18', type=str)
->>>>>>> Stashed changes
+    parser.add_argument('--output_dir', default='/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/emavfi/interpolations/new_ft_100_base_arbitrary_110_13051_23361_18', type=str)
     parser.add_argument('--verbose', default=True, type=bool)
     parser.add_argument('--device', default="cuda:2", type=str)
     args = parser.parse_args()

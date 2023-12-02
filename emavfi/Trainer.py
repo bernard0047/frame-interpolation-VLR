@@ -48,7 +48,7 @@ class Model:
             # self.net.load_state_dict(convert(torch.load('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/baseline_ckpt/ours_small.pkl')))
             #self.net.load_state_dict(convert(torch.load('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/baseline_ckpt/ours_small_t.pkl')))
             # self.net.load_state_dict(convert(torch.load('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/emavfi/ckpt/ours_small.pkl')))
-            self.net.load_state_dict(convert(torch.load('/home/arpitsah/Desktop/vlr_project/frame-interpolation-VLR/baseline_ckpt/ours_small_t.pkl')))
+            self.net.load_state_dict(convert(torch.load('/home/arpitsah/Desktop/vlr_project/frame-interpolation-VLR/emavfi/ckpt/ours_small_ours_small_t_199.pkl')))
 
             # self.net.load_state_dict(convert(torch.load(f'/home/xinyu/16824/project/frame-interpolation-VLR/emavfi/ckpt/ours_small_99_arpit.pkl')))
             # self.net.load_state_dict(convert(torch.load(f'/home/arpitsah/Desktop/vlr_project/frame-interpolation-VLR/EMA_VFI weights/ours_small_ours_small_t_epoch_99.pkl', map_location=self.device)))
@@ -57,7 +57,7 @@ class Model:
     def save_model(self, epoch,rank=0):
         if rank == 0:
             os.makedirs('ckpt',exist_ok = True)
-            torch.save(self.net.state_dict(),f'ckpt/{self.name}_ours_small_t_{epoch}.pkl')
+            torch.save(self.net.state_dict(),f'ckpt/{self.name}_ours_small_t_300_{epoch}.pkl')
 
     @torch.no_grad()
     def hr_inference(self, img0, img1, TTA = False, down_scale = 1.0, timestep = 0.5, fast_TTA = False):

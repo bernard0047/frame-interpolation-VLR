@@ -26,7 +26,7 @@ exp = os.path.abspath('.').split('/')[-1]
 
 
 def get_learning_rate(step, args):
-    total_steps = 100 * args.step_per_epoch
+    total_steps = 300 * args.step_per_epoch
     warmup_steps = args.step_per_epoch * 5
     peak_lr = 1e-4
     base_lr = 2e-5
@@ -43,7 +43,8 @@ def get_learning_rate(step, args):
 
 def train(model, local_rank, batch_size, data_path):
     if local_rank == 0:
-        writer = SummaryWriter('log/train_EMAVFI_200_epoch_cosine')
+        cur_time =  time.time()
+        writer = SummaryWriter('log/train_EMAVFI_200_epoch_cosine_{cur_time}')
     step = 0
     nr_eval = 0
     best = 0
@@ -62,7 +63,7 @@ def train(model, local_rank, batch_size, data_path):
     # evaluate(model, val_data, nr_eval, local_rank)
     # sys.exit()
     time_stamp = time.time()
-    for epoch in range(100):
+    for epoch in range(300):
         sampler.set_epoch(epoch)
         for i, cat_imgs in enumerate(train_data):
             data_time_interval = time.time() - time_stamp
