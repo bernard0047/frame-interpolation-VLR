@@ -20,8 +20,8 @@ import datetime
 
 device = torch.device("cuda")
 exp = os.path.abspath('.').split('/')[-1]
-# os.environ['MASTER_ADDR'] = 'localhost'
-# os.environ['MASTER_PORT'] = '12345'
+os.environ['MASTER_ADDR'] = 'localhost'
+os.environ['MASTER_PORT'] = '12345'
 
 
 
@@ -63,7 +63,7 @@ def train(model, local_rank, batch_size, data_path):
     # evaluate(model, val_data, nr_eval, local_rank)
     # sys.exit()
     time_stamp = time.time()
-    for epoch in range(300):
+    for epoch in range(200):
         sampler.set_epoch(epoch)
         for i, cat_imgs in enumerate(train_data):
             data_time_interval = time.time() - time_stamp
@@ -138,16 +138,16 @@ if __name__ == "__main__":
                         type=bool, help='use perceptual loss if true')
 
     args = parser.parse_args()
-    torch.distributed.init_process_group(
-        backend="nccl", world_size=args.world_size)
     # torch.distributed.init_process_group(
-    #         backend='nccl',
-    #         init_method='env://',
-    #         timeout=datetime.timedelta(0, 1800),
-    #         world_size=args.world_size,
-    #         rank=0,
-    #         store=None,
-    #         group_name='')
+    #     backend="nccl", world_size=args.world_size)
+    torch.distributed.init_process_group(
+            backend='nccl',
+            init_method='env://',
+            timeout=datetime.timedelta(0, 1800),
+            world_size=args.world_size,
+            rank=0,
+            store=None,
+            group_name='')
     torch.cuda.set_device(args.local_rank)
     if args.local_rank == 0 and not os.path.exists('log'):
         os.mkdir('log')

@@ -13,7 +13,7 @@ from imageio import mimsave
 sys.path.append('.')
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--model', default='ours_t', type=str)
+parser.add_argument('--model', default='ours_small_t', type=str)
 parser.add_argument('--n', default=16, type=int)
 args = parser.parse_args()
 assert args.model in ['ours_t', 'ours_small_t'], 'Model not exists!'
@@ -34,10 +34,10 @@ else:
         F=32,
         depth=[2, 2, 2, 4, 4]
     )
-model = Model(-1)
+model = Model(-1,use_perceptual_loss= False)
 model.load_model()
 model.eval()
-model.device()
+model.get_device()
 
 
 print(f'=========================Start Generating=========================')
