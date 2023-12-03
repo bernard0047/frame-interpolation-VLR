@@ -20,8 +20,8 @@ import datetime
 
 device = torch.device("cuda")
 exp = os.path.abspath('.').split('/')[-1]
-# os.environ['MASTER_ADDR'] = 'localhost'
-# os.environ['MASTER_PORT'] = '12345'
+os.environ['MASTER_ADDR'] = 'localhost'
+os.environ['MASTER_PORT'] = '12345'
 
 
 
@@ -138,16 +138,16 @@ if __name__ == "__main__":
     parser.add_argument('--freeze',default = True,type = bool,help = "freeze everthing except backbone and unet")
 
     args = parser.parse_args()
-    torch.distributed.init_process_group(
-        backend="nccl", world_size=args.world_size)
     # torch.distributed.init_process_group(
-    #         backend='nccl',
-    #         init_method='env://',
-    #         timeout=datetime.timedelta(0, 1800),
-    #         world_size=args.world_size,
-    #         rank=0,
-    #         store=None,
-    #         group_name='')
+    #     backend="nccl", world_size=args.world_size)
+    torch.distributed.init_process_group(
+            backend='nccl',
+            init_method='env://',
+            timeout=datetime.timedelta(0, 1800),
+            world_size=args.world_size,
+            rank=0,
+            store=None,
+            group_name='')
     torch.cuda.set_device(args.local_rank)
     if args.local_rank == 0 and not os.path.exists('log'):
         os.mkdir('log')
