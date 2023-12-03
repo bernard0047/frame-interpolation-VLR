@@ -50,11 +50,11 @@ class Model:
                 name = self.name
             # self.net.load_state_dict(convert(torch.load(f'infer_models/emavfi/{name}.pkl')))
             # self.net.load_state_dict(convert(torch.load('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/baseline_ckpt/ours_small.pkl')))
-            self.net.load_state_dict(convert(torch.load('/home/arpitsah/Desktop/vlr_project/frame-interpolation-VLR/baseline_ckpt/ours_small_t.pkl')))
+            self.net.load_state_dict(convert(torch.load('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/baseline_ckpt/ours_small_t.pkl')))
             # self.net.load_state_dict(convert(torch.load('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/emavfi/ckpt/ours_small.pkl')))
 
             # self.net.load_state_dict(convert(torch.load(f'/home/xinyu/16824/project/frame-interpolation-VLR/emavfi/ckpt/ours_small_99_arpit.pkl')))
-            self.net.load_state_dict(convert(torch.load(f'/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/baseline_ckpt/ours_small_t.pkl', map_location=self.device)))
+            # self.net.load_state_dict(convert(torch.load(f'/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/baseline_ckpt/ours_small_t.pkl', map_location=self.device)))
 
             
     def save_model(self, epoch,rank=0):
