@@ -1,4 +1,5 @@
 import sys
+sys.path.append('/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/emavfi')
 sys.path.append('emavfi')
 from emavfi.utils import InputPadder
 from emavfi.Trainer import Model
@@ -18,7 +19,7 @@ def get_args():
     parser.add_argument('--input_dir', default='/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/data/dataset/apple/110_13051_23361_18', type=str)
     parser.add_argument('--output_dir', default='/home/arpitsah/Desktop/Fall-2023/VLR/project/frame-interpolation-VLR/emavfi/interpolations/new_ft_100_base_arbitrary_110_13051_23361_18', type=str)
     parser.add_argument('--verbose', default=True, type=bool)
-    parser.add_argument('--device', default="cuda:2", type=str)
+    parser.add_argument('--device', default="cuda:0", type=str)
     args = parser.parse_args()
     return args
 
@@ -42,10 +43,11 @@ def run_interpolation_pair(args, model, I0, I2):
 
 
 def run_interpolation(args):
-    cfg.MODEL_CONFIG['LOGNAME'] = 'ours_t'
+    cfg.MODEL_CONFIG['LOGNAME'] = 'ours_small'
     cfg.MODEL_CONFIG['MODEL_ARCH'] = cfg.init_model_config(
-        F=32,
-        depth=[2, 2, 2, 4, 4]
+        F = 16,
+        W = 7,
+        depth = [2, 2, 2, 2, 2]
     )
     model = Model(-1,use_perceptual_loss=True,device=args.device)
     model.load_model()

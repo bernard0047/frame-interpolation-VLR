@@ -107,7 +107,7 @@ def convert(param):
             }
 
 if __name__ == "__main__":
-    # torchrun train.py
+    # torchrun eval.py
     parser = argparse.ArgumentParser()
     parser.add_argument('--local_rank', default=0, type=int, help='local rank')
     parser.add_argument('--world_size', default=1, type=int, help='world size')
