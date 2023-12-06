@@ -1,3 +1,7 @@
+<img width="929" alt="image" src="https://github.com/bernard0047/frame-interpolation-VLR/assets/81643693/ec168518-e338-4c28-bdec-f18bd77170ad">
+
+
+
 download ours_t.pkl from https://drive.google.com/drive/folders/16jUa3HkQ85Z5lb5gce1yoaWkP-rdCd0o
 paste it at frame-interpolation/infer_models/emavfi/ours_t.pkl
 
