@@ -2,37 +2,11 @@
 
 
 
-download ours_t.pkl from https://drive.google.com/drive/folders/16jUa3HkQ85Z5lb5gce1yoaWkP-rdCd0o
-paste it at frame-interpolation/infer_models/emavfi/ours_t.pkl
-
-
-# Extracting Motion and Appearance via Inter-Frame Attention for Efficient Video Frame Interpolation [arxiv](https://arxiv.org/abs/2303.00440)
-
-> [**Extracting Motion and Appearance via Inter-Frame Attention for Efficient Video Frame Interpolation**](https://arxiv.org/abs/2303.00440)<br>
-> Accepted by **CVPR 2023**<br>
-> [Guozhen Zhang](https://github.com/GuozhenZhang1999), [Yuhan Zhu](https://github.com/Breeze-zyuhan), [Haonan Wang](https://github.com/haonanwang0522), Youxin Chen, [Gangshan Wu](http://mcg.nju.edu.cn/member/gswu/en/index.html), [Limin Wang](http://wanglimin.github.io/)
-
-[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/extracting-motion-and-appearance-via-inter/video-frame-interpolation-on-vimeo90k)](https://paperswithcode.com/sota/video-frame-interpolation-on-vimeo90k?p=extracting-motion-and-appearance-via-inter)
-[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/extracting-motion-and-appearance-via-inter/video-frame-interpolation-on-ucf101-1)](https://paperswithcode.com/sota/video-frame-interpolation-on-ucf101-1?p=extracting-motion-and-appearance-via-inter)
-[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/extracting-motion-and-appearance-via-inter/video-frame-interpolation-on-xiph-4k-1)](https://paperswithcode.com/sota/video-frame-interpolation-on-xiph-4k-1?p=extracting-motion-and-appearance-via-inter)
-[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/extracting-motion-and-appearance-via-inter/video-frame-interpolation-on-xiph-2k)](https://paperswithcode.com/sota/video-frame-interpolation-on-xiph-2k?p=extracting-motion-and-appearance-via-inter)
-[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/extracting-motion-and-appearance-via-inter/video-frame-interpolation-on-x4k1000fps-2k)](https://paperswithcode.com/sota/video-frame-interpolation-on-x4k1000fps-2k?p=extracting-motion-and-appearance-via-inter)
-[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/extracting-motion-and-appearance-via-inter/video-frame-interpolation-on-x4k1000fps)](https://paperswithcode.com/sota/video-frame-interpolation-on-x4k1000fps?p=extracting-motion-and-appearance-via-inter)
-
-<div align="center">
-  <img src="figs/EMA-VFI.png" width="1000"/>
-</div>
-
-
-
 ## :satisfied: HighLights
 
-In this work, we propose to exploit inter-frame attention for extracting motion and appearance information in video frame interpolation. In particular, we utilize the correlation information hidden within the attention map to simultaneously enhance the appearance information and model motion. Meanwhile, we devise an hybrid CNN and Transformer framework to achieve a better trade-off between performance and efficiency. Experiment results show that our proposed module achieves state-of-the-art performance on both fixed- and arbitrary-timestep interpolation and enjoys effectiveness compared with the previous SOTA method.
+Generating 3D models from sparse views presents a formidable challenge in computer vision. Recent advancements, including various iterations of Neural Radiance Fields (NeRF), have struggled to achieve high fidelity using limited input images. While some contemporary methods have employed diffusion-based techniques to augment sparse views, their effectiveness varies. These methods often perform fairly on specific datasets but typically lack a robust semantic foundation for broader real-world applicability. Additionally, they tend to produce images with compromised fidelity, resulting in blurred reconstructions when viewed from different angles.
 
-Runtime and memory usage compared with previous SOTA method:
-<div align="center">
-  <img src=figs/time.png width=400 />
-</div>
+This work proposes an alternative strategy to address these limitations by interpolating existing views. Our approach uses these processed views as additional data points for NeRF generation. By exploring this methodology, we aim to enhance the fidelity and clarity of 3D reconstructions derived from limited viewpoints. This research not only contributes to overcoming the challenges posed by sparse view inputs but also extends the practical applicability of NeRF in more diverse real-world scenarios. We build an end-to-end pipeline to create faithful reconstructions from a sparse set of views of a given subject.
 
 ## :two_hearts:Dependencies
 
@@ -46,8 +20,7 @@ Runtime and memory usage compared with previous SOTA method:
 
 ## :sunglasses:	Play with Demos
 
-1. Download the [model checkpoints](https://drive.google.com/drive/folders/16jUa3HkQ85Z5lb5gce1yoaWkP-rdCd0o?usp=sharing) ([baidu](https://pan.baidu.com/s/1kvxubOrCxq2Mjc6SXZSa0w)&code:gi5j)and put the ```ckpt``` folder into the root dir.
-2. Run the following commands to generate 2x and Nx (arbitrary) frame interpolation demos:
+1. Run the following commands to generate 2x and Nx (arbitrary) frame interpolation demos:
 
 ```shell
 python demo_2x.py        # for 2x interpolation
@@ -63,7 +36,7 @@ By running above commands, you should get the follow examples by default:
 
 ## :sparkles:	Training for Fixed-timestep Interpolation
 
-1. Download [Vimeo90K dataset](http://toflow.csail.mit.edu/)
+1. Download [Co3D dataset](https://github.com/facebookresearch/co3d)
 2. Run the following command at the root dir:
 
 ```shell
@@ -83,24 +56,6 @@ We use a subset of the Common Objects in 3D (Co3D) dataset having:
 
 
 2. Download the [model checkpoints]() and put the ```ckpt``` folder into the root dir.
-
-
-
-## :muscle:	Citation
-
-
-
-Reference to below paper
-
-```
-@inproceedings{zhang2023extracting,
-  title={Extracting motion and appearance via inter-frame attention for efficient video frame interpolation},
-  author={Zhang, Guozhen and Zhu, Yuhan and Wang, Haonan and Chen, Youxin and Wu, Gangshan and Wang, Limin},
-  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
-  pages={5682--5692},
-  year={2023}
-}
-```
 
 ## :heartpulse:	License and Acknowledgement
 
