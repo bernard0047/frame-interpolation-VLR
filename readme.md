@@ -23,10 +23,7 @@ paste it at frame-interpolation/infer_models/emavfi/ours_t.pkl
   <img src="figs/EMA-VFI.png" width="1000"/>
 </div>
 
-## :boom: News
 
-* **[2023.03.12] We compared our method with other methods (VFIFormer and M2M) under extreme cases such as large motion and scene transitions. The video demonstrating our results can be found [here](https://www.youtube.com/watch?v=ziJLIPzu2HI) ([Bilibili](https://www.bilibili.com/video/BV1584y1A7ae/?vd_source=92c28105d36256b9f950b8793336df88)).**
-* **[2023.03.12] Thanks to @[jhogsett](https://github.com/jhogsett), our model now has a more user-friendly [WebUI](https://github.com/jhogsett/EMA-VFI-WebUI)!**
 
 ## :satisfied: HighLights
 
@@ -77,39 +74,23 @@ The default training setting is *Ours*. If you want train *Ours_small* or your o
 
 ## :runner:	Evaluation
 
-1. Download the dataset you need:
+1. Download the co3d Dataset Subset:
 
-   * [Vimeo90K dataset](http://toflow.csail.mit.edu/)
-   * [UCF101 dataset](https://liuziwei7.github.io/projects/VoxelFlow)
-   * [Xiph dataset](https://github.com/sniklaus/softmax-splatting/blob/master/benchmark_xiph.py)
-   * [MiddleBury OTHER dataset](https://vision.middlebury.edu/flow/data/)
-   * [SNU-FILM dataset](https://myungsub.github.io/CAIN/)
-   * [HD dataset](https://github.com/baowenbo/MEMC-Net)
-   * [X4K1000FPS dataset](https://www.dropbox.com/sh/duisote638etlv2/AABJw5Vygk94AWjGM4Se0Goza?dl=0)
+Dataset
 
-2. Download the [model checkpoints](https://drive.google.com/drive/folders/16jUa3HkQ85Z5lb5gce1yoaWkP-rdCd0o?usp=sharing) and put the ```ckpt``` folder into the root dir.
+We use a subset of the Common Objects in 3D (Co3D) dataset having:
+88 objects from 48 distinct categories with 202 images each .
 
-For 2x interpolation benchmarks:
 
-```shell
-python benchmark/**dataset**.py --model **model[ours/ours_small]** --path /where/is/your/**dataset**
-```
+2. Download the [model checkpoints]() and put the ```ckpt``` folder into the root dir.
 
-For 4x interpolation benchmarks:
 
-```shell
-python benchmark/**dataset**.py --model **model[ours_t/ours_small_t]** --path /where/is/your/dataset
-```
-
-You can also test the inference time of our methods on the $H\times W$ image with the following command:
-
-```shell
-python benchmark/TimeTest.py --model **model[ours/ours_small]** --H **SIZE** --W **SIZE**
-```
 
 ## :muscle:	Citation
 
-If you think this project is helpful in your research or for application, please feel free to leave a star⭐️ and cite our paper:
+
+
+Reference to below paper
 
 ```
 @inproceedings{zhang2023extracting,
