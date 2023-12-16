@@ -81,22 +81,22 @@ The default training setting is *Ours*. If you want train *Ours_small* or your o
 
 2. Download the [model checkpoints](https://drive.google.com/drive/folders/16jUa3HkQ85Z5lb5gce1yoaWkP-rdCd0o?usp=sharing) and put the ```ckpt``` folder into the root dir.
 
-For 2x interpolation benchmarks:
+Training command:
 
 ```shell
-python benchmark/**dataset**.py --model **model[ours/ours_small]** --path /where/is/your/**dataset**
+torchrun train.py
 ```
 
-For 4x interpolation benchmarks:
+Testing command:
 
 ```shell
-python benchmark/**dataset**.py --model **model[ours_t/ours_small_t]** --path /where/is/your/dataset
+torchrun eval.py
 ```
 
-You can also test the inference time of our methods on the $H\times W$ image with the following command:
+Generate Interpolations. please refer file for arguments to be specified
 
 ```shell
-python benchmark/TimeTest.py --model **model[ours/ours_small]** --H **SIZE** --W **SIZE**
+python main.py
 ```
 
 ## :muscle:	Citation
